@@ -27,8 +27,8 @@ const BCM_CONFIG = {
 
   // External links shown in the footer / Connect page
   LINKS: {
-    groupme: "https://groupme.com/",
-    flocknote: "https://flocknote.com/",
+    groupme: "https://groupme.com/join_group/99395482/18wIAcnd",
+    flocknote: "https://boilercatholics.flocknote.com/BCM/settings/group",
     instagram: "https://instagram.com/",
     email: "mailto:bcm@purdue.edu"
   }
