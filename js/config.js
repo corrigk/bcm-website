@@ -14,7 +14,7 @@ const BCM_CONFIG = {
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh3YXB5cWllcHlva3J4aWh0eXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwOTg4NDMsImV4cCI6MjEwMDY3NDg0M30.NuOelwcYBkDJjHuzzbk0EyWnUfpICECCFhK4vCPGdfI",
 
   // Paste the "Embed" URL from Google Calendar's sharing settings here.
-  GOOGLE_CALENDAR_EMBED_URL: "https://calendar.google.com/calendar/embed?src=4e765a9c352baa24f2d86e2e44756fd8cfc81fda6ee90488e9ddb23fead586ab%40group.calendar.google.com&ctz=America%2FBoise",
+  GOOGLE_CALENDAR_EMBED_URL: "https://calendar.google.com/calendar/embed?src=4e765a9c352baa24f2d86e2e44756fd8cfc81fda6ee90488e9ddb23fead586ab%40group.calendar.google.com&ctz=America%2FIndiana%2FIndianapolis",
 
   // External links shown in the footer / Connect page
   LINKS: {
