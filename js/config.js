@@ -16,10 +16,19 @@ const BCM_CONFIG = {
   // Paste the "Embed" URL from Google Calendar's sharing settings here.
   GOOGLE_CALENDAR_EMBED_URL: "https://calendar.google.com/calendar/embed?src=4e765a9c352baa24f2d86e2e44756fd8cfc81fda6ee90488e9ddb23fead586ab%40group.calendar.google.com&ctz=America%2FIndiana%2FIndianapolis",
 
+  // Home page hero slideshow. Add image files to the images/hero/
+  // folder, then list their filenames here in the order you want them
+  // to appear. One photo just displays statically; two or more will
+  // cross-fade automatically. Add/remove photos any time by editing
+  // this list — no other code changes needed.
+  HERO_IMAGES: [
+    "images/hero/photo-1.jpg"
+  ],
+
   // External links shown in the footer / Connect page
   LINKS: {
-    groupme: "https://groupme.com/join_group/99395482/18wIAcnd",
-    flocknote: "https://boilercatholics.flocknote.com/BCM/settings/group",
+    groupme: "https://groupme.com/",
+    flocknote: "https://flocknote.com/",
     instagram: "https://instagram.com/",
     email: "mailto:bcm@purdue.edu"
   }
