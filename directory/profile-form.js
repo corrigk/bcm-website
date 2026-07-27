@@ -9,7 +9,15 @@ async function renderProfileForm(container, userId){
           <div class="field"><label>Graduation Year</label><input type="number" id="p-grad-year" min="1950" max="2100"></div>
         </div>
         <div class="grid-2">
-          <div class="field"><label>Major</label><input type="text" id="p-major"></div>
+          <div class="field">
+            <label>Major</label>
+            <select id="p-major">
+              <option value="">Select a major…</option>
+              ${PURDUE_MAJORS.map(m => `<option value="${m}">${m}</option>`).join('')}
+              <option value="__other__">Other / Not Listed</option>
+            </select>
+            <input type="text" id="p-major-other" placeholder="Type your major" style="display:none; margin-top:8px;">
+          </div>
           <div class="field">
             <label>Status</label>
             <select id="p-alumni">
@@ -50,12 +58,24 @@ async function renderProfileForm(container, userId){
   };
   styleFields();
 
+  const majorSelect = container.querySelector('#p-major');
+  const majorOther = container.querySelector('#p-major-other');
+  majorSelect.addEventListener('change', () => {
+    majorOther.style.display = majorSelect.value === '__other__' ? 'block' : 'none';
+  });
+
   try{
     const profile = await BCMData.getMyProfile(userId);
     if (profile){
       container.querySelector('#p-name').value = profile.name || '';
       container.querySelector('#p-grad-year').value = profile.grad_year || '';
-      container.querySelector('#p-major').value = profile.major || '';
+      if (profile.major && PURDUE_MAJORS.includes(profile.major)){
+        majorSelect.value = profile.major;
+      } else if (profile.major){
+        majorSelect.value = '__other__';
+        majorOther.value = profile.major;
+        majorOther.style.display = 'block';
+      }
       container.querySelector('#p-alumni').value = profile.is_alumni ? 'true' : 'false';
       container.querySelector('#p-company').value = profile.company || '';
       container.querySelector('#p-job-title').value = profile.job_title || '';
@@ -69,10 +89,11 @@ async function renderProfileForm(container, userId){
     e.preventDefault();
     const savedEl = container.querySelector('#profile-saved');
     savedEl.style.display = 'none';
+    const majorValue = majorSelect.value === '__other__' ? majorOther.value.trim() : majorSelect.value;
     const payload = {
       name: container.querySelector('#p-name').value,
       grad_year: container.querySelector('#p-grad-year').value ? parseInt(container.querySelector('#p-grad-year').value, 10) : null,
-      major: container.querySelector('#p-major').value,
+      major: majorValue,
       is_alumni: container.querySelector('#p-alumni').value === 'true',
       company: container.querySelector('#p-company').value,
       job_title: container.querySelector('#p-job-title').value,
