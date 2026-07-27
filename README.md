@@ -113,6 +113,13 @@ titles, LinkedIn, etc. A few things by design:
 If BCM wants an explicit "don't show my employer" style privacy toggle
 per field later, that's a reasonable small addition on top of this.
 
+**Major dropdown:** the profile form's Major field is a dropdown pulled
+from `js/purdue-majors.js` — a curated (not perfectly exhaustive) list
+of real Purdue majors, so entries stay consistent for filtering on the
+Directory page instead of everyone typing their own variation. Anyone
+whose program isn't listed can pick "Other" and type it in. To add or
+remove majors, just edit the array in that file — it's plain text.
+
 ---
 
 ## 4. Setting up the Google Calendar embed
