@@ -22,7 +22,7 @@ const BCM_CONFIG = {
   // cross-fade automatically. Add/remove photos any time by editing
   // this list — no other code changes needed.
   HERO_IMAGES: [
-    "images/hero/photo-1.jpg"
+    "images/hero/cristain_sunset.jfif"
   ],
 
   // External links shown in the footer / Connect page
