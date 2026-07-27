@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — Boiler Catholic Men</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<section class="section--dark" style="min-height:100vh; display:flex; align-items:center;">
+  <div class="container" style="max-width: 420px;">
+    <div class="eyebrow" style="color:var(--gold-bright);">RESTRICTED</div>
+    <h1 style="color:#fff; font-size:1.8rem;">Admin Login</h1>
+    <p style="color:var(--gold); margin-bottom:24px;">For BCM leadership only.</p>
+
+    <div class="panel--dark panel" id="login-panel">
+      <form id="login-form" class="stack">
+        <label class="stack" style="gap:6px;">
+          <span class="eyebrow" style="color:var(--gold); margin-bottom:0;">Email</span>
+          <input type="email" id="email" required autocomplete="username"
+            style="padding:10px; font-family:var(--f-body); border:1px solid var(--line); background:var(--blueprint); color:#fff;">
+        </label>
+        <label class="stack" style="gap:6px;">
+          <span class="eyebrow" style="color:var(--gold); margin-bottom:0;">Password</span>
+          <input type="password" id="password" required autocomplete="current-password"
+            style="padding:10px; font-family:var(--f-body); border:1px solid var(--line); background:var(--blueprint); color:#fff;">
+        </label>
+        <button type="submit" class="btn" style="width:100%; justify-content:center;">Log In</button>
+        <p id="login-error" class="muted" style="color:#e2a08a; display:none; margin:0;"></p>
+        <p id="not-configured" class="muted" style="display:none; margin:0;">
+          Supabase isn't connected yet — see README.md to set up admin accounts.
+        </p>
+      </form>
+    </div>
+
+    <p class="muted" style="margin-top:18px;"><a href="../index.html" style="color:var(--gold);">← Back to site</a></p>
+  </div>
+</section>
+
+<script src="../js/config.js"></script>
+<script src="../js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/data.js"></script>
+<script>
+  async function routeIfAdmin(){
+    const session = await BCMData.getSession();
+    if (!session) return;
+    await BCMData.ensureMemberRow(session);
+    const status = await BCMData.getMyStatus(session.user.id);
+    if (status && status.is_admin){
+      location.href = 'dashboard.html';
+    } else {
+      const errorEl = document.getElementById('login-error');
+      errorEl.textContent = "This account doesn't have officer/admin access. Looking for the member directory instead? ";
+      const link = document.createElement('a');
+      link.href = '../directory/login.html';
+      link.textContent = 'Go there →';
+      link.style.color = '#fff';
+      errorEl.appendChild(link);
+      errorEl.style.display = 'block';
+      await BCMData.signOut();
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!BCMData.isLive()){
+      document.getElementById('not-configured').style.display = 'block';
+      return;
+    }
+    routeIfAdmin();
+  });
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('login-error');
+    errorEl.style.display = 'none';
+    try{
+      await BCMData.signIn(document.getElementById('email').value, document.getElementById('password').value);
+      await routeIfAdmin();
+    }catch(err){
+      errorEl.textContent = err.message || 'Login failed.';
+      errorEl.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>

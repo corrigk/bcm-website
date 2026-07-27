@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boiler Catholic Men — Purdue University</title>
+<meta name="description" content="Boiler Catholic Men (BCM) — a brotherhood of Purdue men pursuing Christ together.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<!-- ============ HERO ============ -->
+<section class="section--dark" style="padding: 90px 0 70px; position:relative; overflow:hidden;">
+  <div class="container" style="position:relative; z-index:1;">
+    <div class="eyebrow" style="color: var(--gold-bright);">EST. AT PURDUE UNIVERSITY</div>
+    <h1 style="color:var(--white); max-width: 16ch;">Iron sharpens iron. So does brotherhood.</h1>
+    <p style="max-width: 52ch; font-size:1.15rem; color: var(--gold);">
+      Boiler Catholic Men is a community of students pursuing Christ together —
+      through prayer, formation, and real friendship — right here on Purdue's campus.
+    </p>
+    <div class="row" style="margin-top: 28px;">
+      <a href="calendar.html" class="btn">View This Week</a>
+      <a href="connect.html" class="btn btn--on-dark">New Here? Start Here</a>
+    </div>
+  </div>
+  <!-- blueprint grid backdrop -->
+  <svg aria-hidden="true" style="position:absolute; inset:0; width:100%; height:100%; opacity:0.14; z-index:0;">
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3E6E85" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#grid)" />
+  </svg>
+</section>
+
+<!-- ============ THIS WEEK / ANNOUNCEMENTS PREVIEW ============ -->
+<section class="section">
+  <div class="container">
+    <div class="grid-2">
+
+      <div>
+        <div class="eyebrow">SEC. 01 — UPCOMING</div>
+        <h2>This Week</h2>
+        <p class="muted">Weekly gatherings, Holy Hour, and small groups — full calendar has all the detail.</p>
+        <div class="panel stack" style="margin-top:18px;">
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <div class="tag">WED · 7:00 PM</div>
+              <h3 style="margin-top:8px;">Large Group</h3>
+              <p class="muted" style="margin:0;">Talk, worship, and fellowship — Newman Hall Great Room.</p>
+            </div>
+          </div>
+          <hr class="hr">
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <div class="tag">THU · 9:00 PM</div>
+              <h3 style="margin-top:8px;">Holy Hour &amp; Confession</h3>
+              <p class="muted" style="margin:0;">Adoration in the Newman Chapel. All are welcome.</p>
+            </div>
+          </div>
+        </div>
+        <a href="calendar.html" class="btn btn--ghost" style="margin-top:18px;">Full Calendar →</a>
+      </div>
+
+      <div>
+        <div class="eyebrow">SEC. 02 — ANNOUNCEMENTS</div>
+        <h2>Latest Word</h2>
+        <div id="home-announcements" class="stack" style="margin-top:18px;">
+          <p class="muted">Loading announcements…</p>
+        </div>
+        <a href="announcements.html" class="btn btn--ghost" style="margin-top:18px;">All Announcements →</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHO TO CONTACT TEASER ============ -->
+<section class="section--tight" style="background: var(--black); color: var(--parchment);">
+  <div class="container center">
+    <div class="eyebrow" style="justify-content:center; color:var(--gold-bright);">SEC. 03 — LEADERSHIP</div>
+    <h2 style="color:#fff;">Not sure who to ask?</h2>
+    <p style="max-width: 46ch; margin: 0 auto 22px; color: var(--gold);">
+      Every question has a person behind it. See the full org chart and reach the right leader directly.
+    </p>
+    <a href="team.html" class="btn btn--on-dark">Who to Contact →</a>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    const el = document.getElementById('home-announcements');
+    try{
+      const all = await BCMData.getAnnouncements();
+      const top = all.slice(0, 3);
+      if (top.length === 0){ el.innerHTML = '<p class="muted">No announcements right now — check back soon.</p>'; return; }
+      el.innerHTML = top.map(a => `
+        <div class="panel">
+          ${a.pinned ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent); margin-bottom:8px; display:inline-block;">Last-Minute</span>' : ''}
+          <h3 style="margin-bottom:6px;">${bcmEscape(a.title)}</h3>
+          <p class="muted" style="margin-bottom:4px;">${bcmEscape(bcmTruncate(a.body, 130))}</p>
+          <span class="tag">${bcmFormatDate(a.created_at)}</span>
+        </div>
+      `).join('');
+    }catch(e){
+      console.error(e);
+      el.innerHTML = '<p class="muted">Couldn\'t load announcements right now.</p>';
+    }
+  });
+</script>
+</body>
+</html>

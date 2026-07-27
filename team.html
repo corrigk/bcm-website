@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Who to Contact — Boiler Catholic Men</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* ---- schematic org chart, page-specific ---- */
+  .org-wrap{ overflow-x:auto; padding-bottom: 10px; }
+  .org-chart{ min-width: 640px; }
+  .org-connector{ width:1px; height:28px; background:var(--line); margin:0 auto; }
+  .org-tier{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:22px;
+    position:relative; padding-top: 28px;
+  }
+  .org-tier::before{
+    content:""; position:absolute; top:0; left:12%; right:12%; height:1px;
+    background:var(--line);
+  }
+  .org-tier[data-single="true"]::before{ display:none; }
+  .org-node{
+    position:relative;
+    width: 200px;
+    background: var(--white);
+    border: 1px solid var(--paper-line);
+    padding: 16px 14px;
+    text-align:center;
+  }
+  .org-node::before{
+    content:""; position:absolute; top:-28px; left:50%; width:1px; height:28px;
+    background:var(--line);
+  }
+  .org-tier[data-single="true"] .org-node::before{ display:none; }
+  .org-node .node-id{
+    font-family: var(--f-mono); font-size:0.62rem; letter-spacing:0.1em;
+    color: var(--blueprint); position:absolute; top:8px; left:10px;
+  }
+  .org-node .node-photo{
+    width:52px; height:52px; border-radius:50%;
+    background: var(--parchment); border:1px solid var(--paper-line);
+    margin: 6px auto 10px; display:flex; align-items:center; justify-content:center;
+    font-family: var(--f-display); font-weight:700; color: var(--blueprint);
+  }
+  .org-node .node-name{ font-family: var(--f-display); font-weight:600; text-transform:uppercase; font-size:0.95rem; }
+  .org-node .node-role{ font-family: var(--f-mono); font-size:0.7rem; color: var(--ink-soft); letter-spacing:0.03em; margin:4px 0 10px; }
+  .org-node a.node-email{
+    display:inline-block; font-family: var(--f-mono); font-size:0.68rem;
+    color: var(--blueprint); text-decoration:none; border-bottom:1px dotted var(--blueprint);
+  }
+  .org-node--root{ width: 220px; border-color: var(--gold-bright); border-width:2px; }
+  .tier-label{
+    text-align:center; font-family:var(--f-mono); font-size:0.68rem; letter-spacing:0.12em;
+    color: var(--blueprint); text-transform:uppercase; margin-bottom: -6px;
+  }
+</style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container">
+    <div class="eyebrow" style="color:var(--gold-bright);">SEC. 03 — LEADERSHIP</div>
+    <h1 style="color:#fff;">Who to Contact</h1>
+    <p style="color:var(--gold); max-width:56ch;">
+      Every role, wired to the person who fills it. Find your question below, then reach out directly.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="org-wrap">
+      <div class="org-chart" id="org-chart">
+        <p class="muted center">Loading org chart…</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section--tight" style="background: var(--parchment); border-top:1px solid var(--paper-line);">
+  <div class="container">
+    <div class="eyebrow">QUICK LOOKUP</div>
+    <h2>By Name</h2>
+    <div id="team-table" class="stack" style="margin-top:14px;"></div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  function initials(name=''){
+    return name.split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
+  }
+
+  function nodeHtml(member, idx, root){
+    return `
+      <div class="org-node ${root ? 'org-node--root' : ''}">
+        <span class="node-id">${String(idx+1).padStart(2,'0')}</span>
+        <div class="node-photo">${initials(member.name)}</div>
+        <div class="node-name">${bcmEscape(member.name)}</div>
+        <div class="node-role">${bcmEscape(member.role)}</div>
+        ${member.email ? `<a class="node-email" href="mailto:${member.email}">${member.email}</a>` : ''}
+      </div>
+    `;
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const chartEl = document.getElementById('org-chart');
+    const tableEl = document.getElementById('team-table');
+    try{
+      const team = await BCMData.getTeam();
+      if (team.length === 0){ chartEl.innerHTML = '<p class="muted center">No team members added yet.</p>'; return; }
+
+      // root = chaplain/president-like roles, matched by keyword
+      const isRoot = m => /chaplain|president/i.test(m.role);
+      const root = team.filter(isRoot);
+      const rest = team.filter(m => !isRoot(m));
+
+      // group the rest by category, preserving first-seen order
+      const order = [];
+      const groups = {};
+      rest.forEach(m => {
+        const cat = m.category || 'Team';
+        if (!groups[cat]){ groups[cat] = []; order.push(cat); }
+        groups[cat].push(m);
+      });
+
+      let html = '';
+      if (root.length){
+        html += `<div class="org-tier" data-single="true">${root.map((m,i)=>nodeHtml(m,i,true)).join('')}</div>`;
+        html += `<div class="org-connector"></div>`;
+      }
+      order.forEach((cat, ci) => {
+        html += `<div class="tier-label">${bcmEscape(cat)}</div>`;
+        html += `<div class="org-tier">${groups[cat].map((m,i)=>nodeHtml(m,i,false)).join('')}</div>`;
+        if (ci < order.length - 1) html += `<div class="org-connector"></div>`;
+      });
+      chartEl.innerHTML = html;
+
+      tableEl.innerHTML = [...team].sort((a,b)=>a.name.localeCompare(b.name)).map(m => `
+        <div class="row" style="justify-content:space-between; border-bottom:1px solid var(--paper-line); padding:10px 0;">
+          <span><strong>${bcmEscape(m.name)}</strong> <span class="muted">— ${bcmEscape(m.role)}</span></span>
+          ${m.email ? `<a href="mailto:${m.email}" class="tag">${m.email}</a>` : ''}
+        </div>
+      `).join('');
+    }catch(e){
+      console.error(e);
+      chartEl.innerHTML = '<p class="muted center">Couldn\'t load the org chart right now.</p>';
+    }
+  });
+</script>
+</body>
+</html>

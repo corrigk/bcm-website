@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — Boiler Catholic Men</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container row" style="justify-content:space-between;">
+    <div>
+      <div class="eyebrow" style="color:var(--gold-bright);">MEMBERS ONLY</div>
+      <h1 style="color:#fff; margin:0;">My Profile</h1>
+    </div>
+    <a href="browse.html" class="btn btn--on-dark btn--small">← Back to Directory</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container" style="max-width:640px;">
+    <div id="profile-editor"><p class="muted">Loading…</p></div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/data.js"></script>
+<script src="../js/layout.js"></script>
+<script src="profile-form.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!BCMData.isLive()){
+      document.getElementById('profile-editor').innerHTML = "<p class='muted'>Supabase isn't connected yet — see README.md.</p>";
+      return;
+    }
+    const session = await BCMData.getSession();
+    if (!session){ location.href = 'login.html'; return; }
+    renderProfileForm(document.getElementById('profile-editor'), session.user.id);
+  });
+</script>
+</body>
+</html>

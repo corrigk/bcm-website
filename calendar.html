@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar — Boiler Catholic Men</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container">
+    <div class="eyebrow" style="color:var(--gold-bright);">SEC. 01 — SCHEDULE</div>
+    <h1 style="color:#fff;">Calendar</h1>
+    <p style="color:var(--gold); max-width:56ch;">
+      Weekly gatherings and one-off events, all in one place. Add it to your own calendar
+      with the button below so you never miss a Wednesday.
+    </p>
+    <div class="row" style="margin-top:10px;">
+      <a href="#" id="subscribe-btn" class="btn btn--on-dark" target="_blank" rel="noopener">Subscribe to This Calendar</a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+
+    <div class="row" style="justify-content:space-between; margin-bottom:16px;">
+      <div class="eyebrow" style="margin-bottom:0;">VIEW</div>
+      <div class="row" style="gap:8px;">
+        <button class="btn btn--small btn--ghost" id="view-month">Month</button>
+        <button class="btn btn--small btn--ghost" id="view-week">Week</button>
+        <button class="btn btn--small btn--ghost" id="view-agenda">Agenda</button>
+      </div>
+    </div>
+
+    <div class="panel" style="padding:0; overflow:hidden;" id="calendar-panel">
+      <!-- Google Calendar iframe is injected by js below once configured -->
+      <div id="calendar-embed" style="min-height: 640px; display:flex; align-items:center; justify-content:center; padding: 40px;">
+        <p class="muted center" style="max-width: 46ch;">
+          Google Calendar isn't connected yet. Add your calendar's embed URL to
+          <code>GOOGLE_CALENDAR_EMBED_URL</code> in <code>js/config.js</code> — see the README
+          for how to grab that link from Google Calendar's sharing settings.
+        </p>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="eyebrow">RECURRING</div>
+    <h2>Every Week</h2>
+    <div class="grid-3" style="margin-top:14px;">
+      <div class="panel">
+        <span class="tag">WED · 7:00 PM</span>
+        <h3 style="margin-top:10px;">Large Group</h3>
+        <p class="muted" style="margin:0;">Newman Hall Great Room — talk, worship, fellowship.</p>
+      </div>
+      <div class="panel">
+        <span class="tag">THU · 9:00 PM</span>
+        <h3 style="margin-top:10px;">Holy Hour &amp; Confession</h3>
+        <p class="muted" style="margin:0;">Newman Chapel — adoration, silence, confession available.</p>
+      </div>
+      <div class="panel">
+        <span class="tag">VARIES</span>
+        <h3 style="margin-top:10px;">Small Groups</h3>
+        <p class="muted" style="margin:0;">Sunday &amp; Tuesday nights across campus housing — ask a leader.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  function buildEmbedUrl(mode){
+    if (!BCM_CONFIG.GOOGLE_CALENDAR_EMBED_URL) return null;
+    const url = new URL(BCM_CONFIG.GOOGLE_CALENDAR_EMBED_URL);
+    url.searchParams.set('mode', mode); // MONTH, WEEK, AGENDA
+    return url.toString();
+  }
+
+  function renderCalendar(mode){
+    const embedDiv = document.getElementById('calendar-embed');
+    const url = buildEmbedUrl(mode);
+    if (!url){ return; } // leave the placeholder message in place
+    embedDiv.innerHTML = `<iframe src="${url}" style="border:0" width="100%" height="640" frameborder="0" scrolling="no"></iframe>`;
+  }
+
+  document.querySelectorAll('#view-month, #view-week, #view-agenda').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.id === 'view-month' ? 'MONTH' : btn.id === 'view-week' ? 'WEEK' : 'AGENDA';
+      renderCalendar(mode);
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderCalendar('WEEK');
+    if (BCM_CONFIG.GOOGLE_CALENDAR_EMBED_URL){
+      document.getElementById('subscribe-btn').href = BCM_CONFIG.GOOGLE_CALENDAR_EMBED_URL.replace('/embed?', '/render?');
+    }
+  });
+</script>
+</body>
+</html>

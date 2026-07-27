@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Boiler Catholic Men</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .tab-btn{ }
+  .tab-btn.active{ background: var(--gold-bright); color: var(--black); border-color: var(--gold-bright); }
+  .admin-row{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+    border-bottom:1px solid var(--paper-line); padding: 14px 0;
+  }
+  .admin-row:last-child{ border-bottom:none; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-family:var(--f-mono); font-size:0.7rem; letter-spacing:.08em; text-transform:uppercase; color: var(--blueprint); }
+  .field input, .field textarea, .field select{
+    padding:10px; font-family: var(--f-body); border:1px solid var(--paper-line); background:#fff;
+  }
+  .field textarea{ min-height:100px; resize:vertical; }
+</style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--black); color:var(--parchment);">
+  <div class="container row" style="justify-content:space-between;">
+    <div>
+      <div class="eyebrow" style="color:var(--gold-bright);">ADMIN</div>
+      <h1 style="color:#fff; font-size:1.8rem; margin:0;">Dashboard</h1>
+    </div>
+    <div class="row">
+      <span id="whoami" class="muted" style="color:var(--gold);"></span>
+      <button id="logout-btn" class="btn btn--on-dark btn--small">Log Out</button>
+    </div>
+  </div>
+</section>
+
+<section id="not-configured-warning" class="section--tight" style="display:none; background: var(--urgent-bg); border-bottom:1px solid var(--urgent);">
+  <div class="container">
+    <p style="margin:0; color:var(--urgent);">
+      Supabase isn't connected yet, so nothing here can save. Fill in <code>js/config.js</code> and
+      follow the README's Supabase setup steps first.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="row" style="margin-bottom: 24px;">
+      <button class="btn btn--ghost tab-btn active" data-tab="announcements">Announcements</button>
+      <button class="btn btn--ghost tab-btn" data-tab="team">Org Chart</button>
+      <button class="btn btn--ghost tab-btn" data-tab="members">Member Requests</button>
+    </div>
+
+    <!-- ===================== ANNOUNCEMENTS TAB ===================== -->
+    <div id="tab-announcements">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">NEW ANNOUNCEMENT</div>
+        <form id="announcement-form" class="stack">
+          <input type="hidden" id="a-id">
+          <div class="field">
+            <label>Title</label>
+            <input type="text" id="a-title" required>
+          </div>
+          <div class="field">
+            <label>Body</label>
+            <textarea id="a-body" required></textarea>
+          </div>
+          <div class="row">
+            <label class="row" style="gap:8px;">
+              <input type="checkbox" id="a-pinned"> <span>Mark as Last-Minute (pinned to top + banner)</span>
+            </label>
+          </div>
+          <div class="field" style="max-width:280px;">
+            <label>Expires (optional — auto-unpins after this date)</label>
+            <input type="date" id="a-expires">
+          </div>
+          <div class="row">
+            <button type="submit" class="btn">Save Announcement</button>
+            <button type="button" id="a-cancel" class="btn btn--ghost" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="eyebrow">EXISTING</div>
+      <div id="announcements-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== TEAM TAB ===================== -->
+    <div id="tab-team" style="display:none;">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">NEW / EDIT TEAM MEMBER</div>
+        <form id="team-form" class="stack">
+          <input type="hidden" id="t-id">
+          <div class="grid-2">
+            <div class="field"><label>Name</label><input type="text" id="t-name" required></div>
+            <div class="field"><label>Role</label><input type="text" id="t-role" required placeholder="e.g. VP of Events"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Category</label>
+              <input type="text" id="t-category" required placeholder="e.g. Leadership, Ministry Teams">
+            </div>
+            <div class="field"><label>Email</label><input type="email" id="t-email"></div>
+          </div>
+          <div class="field" style="max-width:160px;">
+            <label>Order (lower = first)</label>
+            <input type="number" id="t-order" value="10">
+          </div>
+          <div class="row">
+            <button type="submit" class="btn">Save Team Member</button>
+            <button type="button" id="t-cancel" class="btn btn--ghost" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="eyebrow">EXISTING</div>
+      <div id="team-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== MEMBER REQUESTS TAB ===================== -->
+    <div id="tab-members" style="display:none;">
+      <div class="eyebrow">PENDING REQUESTS</div>
+      <p class="muted" style="margin-top:4px;">Approve access for current members and alumni requesting the directory.</p>
+      <div id="pending-list" class="panel stack" style="margin-top:12px; margin-bottom:32px;"></div>
+
+      <div class="eyebrow">APPROVED MEMBERS</div>
+      <p class="muted" style="margin-top:4px;">Promote trusted officers to admin, or revoke access.</p>
+      <div id="approved-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/data.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  // ---- auth guard ----
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!BCMData.isLive()){
+      document.getElementById('not-configured-warning').style.display = 'block';
+    } else {
+      const session = await BCMData.getSession();
+      if (!session){ location.href = 'login.html'; return; }
+      const status = await BCMData.getMyStatus(session.user.id);
+      if (!status || !status.is_admin){ location.href = 'login.html'; return; }
+      document.getElementById('whoami').textContent = session.user.email;
+    }
+    loadAnnouncements();
+    loadTeam();
+    loadMembers();
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await BCMData.signOut();
+    location.href = 'login.html';
+  });
+
+  // ---- tabs ----
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-announcements').style.display = btn.dataset.tab === 'announcements' ? 'block' : 'none';
+      document.getElementById('tab-team').style.display = btn.dataset.tab === 'team' ? 'block' : 'none';
+      document.getElementById('tab-members').style.display = btn.dataset.tab === 'members' ? 'block' : 'none';
+    });
+  });
+
+  // ===================== ANNOUNCEMENTS =====================
+  async function loadAnnouncements(){
+    const list = document.getElementById('announcements-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getAnnouncements();
+      list.innerHTML = all.length ? all.map(a => `
+        <div class="admin-row">
+          <div>
+            ${a.pinned ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent);">Last-Minute</span>' : ''}
+            <h3 style="margin:6px 0 2px;">${bcmEscape(a.title)}</h3>
+            <p class="muted" style="margin:0 0 4px; max-width:60ch;">${bcmEscape(bcmTruncate(a.body,160))}</p>
+            <span class="tag">${bcmFormatDate(a.created_at)}</span>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick='editAnnouncement(${JSON.stringify(a)})'>Edit</button>
+            <button class="btn btn--small btn--danger" onclick="removeAnnouncement('${a.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">None yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+
+  function editAnnouncement(a){
+    document.getElementById('a-id').value = a.id;
+    document.getElementById('a-title').value = a.title;
+    document.getElementById('a-body').value = a.body;
+    document.getElementById('a-pinned').checked = !!a.pinned;
+    document.getElementById('a-expires').value = a.expires_at ? a.expires_at.slice(0,10) : '';
+    document.getElementById('a-cancel').style.display = 'inline-flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.getElementById('a-cancel').addEventListener('click', () => {
+    document.getElementById('announcement-form').reset();
+    document.getElementById('a-id').value = '';
+    document.getElementById('a-cancel').style.display = 'none';
+  });
+
+  async function removeAnnouncement(id){
+    if (!confirm('Delete this announcement?')) return;
+    try{ await BCMData.deleteAnnouncement(id); loadAnnouncements(); }
+    catch(e){ alert(e.message); }
+  }
+
+  document.getElementById('announcement-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('a-id').value;
+    const payload = {
+      title: document.getElementById('a-title').value,
+      body: document.getElementById('a-body').value,
+      pinned: document.getElementById('a-pinned').checked,
+      expires_at: document.getElementById('a-expires').value || null
+    };
+    try{
+      if (id) await BCMData.updateAnnouncement(id, payload);
+      else await BCMData.createAnnouncement(payload);
+      e.target.reset();
+      document.getElementById('a-id').value = '';
+      document.getElementById('a-cancel').style.display = 'none';
+      loadAnnouncements();
+    }catch(err){ alert(err.message); }
+  });
+
+  // ===================== TEAM =====================
+  async function loadTeam(){
+    const list = document.getElementById('team-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getTeam();
+      list.innerHTML = all.length ? all.map(m => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(m.name)}</h3>
+            <p class="muted" style="margin:0;">${bcmEscape(m.role)} · <span class="tag">${bcmEscape(m.category||'')}</span></p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick='editTeamMember(${JSON.stringify(m)})'>Edit</button>
+            <button class="btn btn--small btn--danger" onclick="removeTeamMember('${m.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">None yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+
+  function editTeamMember(m){
+    document.getElementById('t-id').value = m.id;
+    document.getElementById('t-name').value = m.name;
+    document.getElementById('t-role').value = m.role;
+    document.getElementById('t-category').value = m.category || '';
+    document.getElementById('t-email').value = m.email || '';
+    document.getElementById('t-order').value = m.order || 10;
+    document.getElementById('t-cancel').style.display = 'inline-flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.getElementById('t-cancel').addEventListener('click', () => {
+    document.getElementById('team-form').reset();
+    document.getElementById('t-id').value = '';
+    document.getElementById('t-cancel').style.display = 'none';
+  });
+
+  async function removeTeamMember(id){
+    if (!confirm('Remove this team member?')) return;
+    try{ await BCMData.deleteTeamMember(id); loadTeam(); }
+    catch(e){ alert(e.message); }
+  }
+
+  document.getElementById('team-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('t-id').value;
+    const payload = {
+      name: document.getElementById('t-name').value,
+      role: document.getElementById('t-role').value,
+      category: document.getElementById('t-category').value,
+      email: document.getElementById('t-email').value,
+      order: parseInt(document.getElementById('t-order').value || '10', 10)
+    };
+    try{
+      if (id) await BCMData.updateTeamMember(id, payload);
+      else await BCMData.createTeamMember(payload);
+      e.target.reset();
+      document.getElementById('t-id').value = '';
+      document.getElementById('t-cancel').style.display = 'none';
+      loadTeam();
+    }catch(err){ alert(err.message); }
+  });
+
+  // ===================== MEMBER REQUESTS =====================
+  async function loadMembers(){
+    const pendingEl = document.getElementById('pending-list');
+    const approvedEl = document.getElementById('approved-list');
+    pendingEl.innerHTML = '<p class="muted">Loading…</p>';
+    approvedEl.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const pending = await BCMData.listPendingRequests();
+      pendingEl.innerHTML = pending.length ? pending.map(p => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(p.name)}</h3>
+            <p class="muted" style="margin:0;">${bcmEscape(p.email)} · requested ${bcmFormatDate(p.requested_at)}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small" onclick="approveRequest('${p.id}')">Approve</button>
+            <button class="btn btn--small btn--danger" onclick="denyRequest('${p.id}')">Deny</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No pending requests.</p>';
+    }catch(e){ pendingEl.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`; }
+
+    try{
+      const approved = await BCMData.listApprovedMembers();
+      approvedEl.innerHTML = approved.length ? approved.map(m => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(m.name)}</h3>
+            <p class="muted" style="margin:0;">${bcmEscape(m.email)} ${m.is_admin ? '· <span class="tag">Admin</span>' : ''}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick="toggleAdmin('${m.id}', ${!m.is_admin})">${m.is_admin ? 'Remove Admin' : 'Make Admin'}</button>
+            <button class="btn btn--small btn--danger" onclick="revokeAccess('${m.id}')">Revoke</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No approved members yet.</p>';
+    }catch(e){ approvedEl.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`; }
+  }
+
+  async function approveRequest(id){
+    try{ await BCMData.approveMember(id); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+  async function denyRequest(id){
+    if (!confirm('Deny and remove this request?')) return;
+    try{ await BCMData.denyMember(id); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+  async function toggleAdmin(id, makeAdmin){
+    if (makeAdmin && !confirm('Give this person full admin access (announcements, org chart, approvals)?')) return;
+    try{ await BCMData.setAdmin(id, makeAdmin); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+  async function revokeAccess(id){
+    if (!confirm('Revoke this person\'s directory access? Their profile will be removed.')) return;
+    try{ await BCMData.removeMember(id); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+</script>
+</body>
+</html>

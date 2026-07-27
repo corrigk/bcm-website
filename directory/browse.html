@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Directory — Boiler Catholic Men</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .dir-card{ position:relative; }
+  .dir-card .node-photo{
+    width:44px; height:44px; border-radius:50%; background:var(--parchment);
+    border:1px solid var(--paper-line); display:flex; align-items:center; justify-content:center;
+    font-family:var(--f-display); font-weight:700; color:var(--blueprint); flex-shrink:0;
+  }
+</style>
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container row" style="justify-content:space-between;">
+    <div>
+      <div class="eyebrow" style="color:var(--gold-bright);">MEMBERS ONLY</div>
+      <h1 style="color:#fff; margin:0;">Directory</h1>
+    </div>
+    <div class="row">
+      <a href="profile.html" class="btn btn--on-dark btn--small">Edit My Profile</a>
+      <button id="logout-btn" class="btn btn--on-dark btn--small">Log Out</button>
+    </div>
+  </div>
+</section>
+
+<section class="section--tight" style="border-bottom:1px solid var(--paper-line);">
+  <div class="container">
+    <div class="grid-3">
+      <div class="field"><label>Search</label><input type="text" id="f-search" placeholder="Name, company, bio…"></div>
+      <div class="field"><label>Major</label><select id="f-major"><option value="">All Majors</option></select></div>
+      <div class="field"><label>Grad Year</label><select id="f-grad-year"><option value="">All Years</option></select></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <p class="muted" id="result-count"></p>
+    <div id="directory-list" class="grid-3" style="margin-top:14px;"></div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/data.js"></script>
+<script src="../js/layout.js"></script>
+<script>
+  let ALL_MEMBERS = [];
+
+  function initials(name=''){
+    return name.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  }
+
+  function cardHtml(m){
+    const sub = [m.job_title, m.company].filter(Boolean).join(' at ');
+    return `
+      <div class="panel dir-card stack">
+        <div class="row" style="gap:12px;">
+          <div class="node-photo">${initials(m.name)}</div>
+          <div>
+            <div style="font-family:var(--f-display); font-weight:600; text-transform:uppercase;">${bcmEscape(m.name)}</div>
+            <div class="muted" style="font-size:0.85rem;">${bcmEscape(m.major || '')}${m.grad_year ? ' · \''+String(m.grad_year).slice(2) : ''}</div>
+          </div>
+        </div>
+        ${sub ? `<div class="tag" style="align-self:flex-start;">${bcmEscape(sub)}</div>` : ''}
+        ${m.location ? `<p class="muted" style="margin:0; font-size:0.85rem;">${bcmEscape(m.location)}</p>` : ''}
+        ${m.bio ? `<p style="margin:4px 0 0; font-size:0.92rem;">${bcmEscape(m.bio)}</p>` : ''}
+        ${m.linkedin ? `<a href="${m.linkedin}" target="_blank" rel="noopener" class="btn btn--ghost btn--small" style="align-self:flex-start; margin-top:4px;">LinkedIn</a>` : ''}
+      </div>
+    `;
+  }
+
+  function populateFilters(members){
+    const majorSel = document.getElementById('f-major');
+    const yearSel = document.getElementById('f-grad-year');
+    const majors = [...new Set(members.map(m => m.major).filter(Boolean))].sort();
+    const years = [...new Set(members.map(m => m.grad_year).filter(Boolean))].sort((a,b)=>b-a);
+    majors.forEach(mj => majorSel.insertAdjacentHTML('beforeend', `<option value="${bcmEscape(mj)}">${bcmEscape(mj)}</option>`));
+    years.forEach(y => yearSel.insertAdjacentHTML('beforeend', `<option value="${y}">${y}</option>`));
+  }
+
+  function applyFilters(){
+    const q = document.getElementById('f-search').value.trim().toLowerCase();
+    const major = document.getElementById('f-major').value;
+    const year = document.getElementById('f-grad-year').value;
+
+    const filtered = ALL_MEMBERS.filter(m => {
+      if (major && m.major !== major) return false;
+      if (year && String(m.grad_year) !== year) return false;
+      if (q){
+        const hay = [m.name, m.major, m.company, m.job_title, m.location, m.bio].filter(Boolean).join(' ').toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    document.getElementById('result-count').textContent = `${filtered.length} member${filtered.length === 1 ? '' : 's'}`;
+    document.getElementById('directory-list').innerHTML = filtered.length
+      ? filtered.map(cardHtml).join('')
+      : '<p class="muted">No matches — try clearing a filter.</p>';
+  }
+
+  ['f-search','f-major','f-grad-year'].forEach(id => {
+    document.getElementById(id).addEventListener('input', applyFilters);
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await BCMData.signOut();
+    location.href = 'login.html';
+  });
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (BCMData.isLive()){
+      const session = await BCMData.getSession();
+      if (!session){ location.href = 'login.html'; return; }
+      const status = await BCMData.getMyStatus(session.user.id);
+      if (!status || !status.approved){ location.href = 'pending.html'; return; }
+    }
+    try{
+      ALL_MEMBERS = await BCMData.getDirectory();
+      populateFilters(ALL_MEMBERS);
+      applyFilters();
+    }catch(e){
+      console.error(e);
+      document.getElementById('directory-list').innerHTML = '<p class="muted">Couldn\'t load the directory right now.</p>';
+    }
+  });
+</script>
+</body>
+</html>

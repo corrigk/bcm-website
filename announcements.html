@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Announcements — Boiler Catholic Men</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container">
+    <div class="eyebrow" style="color:var(--gold-bright);">SEC. 02 — ANNOUNCEMENTS</div>
+    <h1 style="color:#fff;">Announcements</h1>
+    <p style="color:var(--gold); max-width:56ch;">
+      Last-minute changes are pinned to the top. Everything else is sorted newest first.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div id="pinned-wrap" style="margin-bottom: 36px;"></div>
+
+    <div class="eyebrow">ALL ANNOUNCEMENTS</div>
+    <div id="announcements-list" class="stack" style="margin-top:14px;">
+      <p class="muted">Loading…</p>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  function announcementCard(a, pinnedStyle){
+    return `
+      <div class="panel${pinnedStyle ? '' : ''}" style="${pinnedStyle ? 'border-color:var(--urgent);' : ''}">
+        <div class="row" style="justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+          ${a.pinned ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent);">Last-Minute</span>' : '<span></span>'}
+          <span class="tag">${bcmFormatDate(a.created_at)}</span>
+        </div>
+        <h3>${bcmEscape(a.title)}</h3>
+        <p style="white-space:pre-line;">${bcmEscape(a.body)}</p>
+      </div>
+    `;
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const pinnedWrap = document.getElementById('pinned-wrap');
+    const list = document.getElementById('announcements-list');
+    try{
+      const all = await BCMData.getAnnouncements();
+      const now = new Date();
+      const notExpired = a => !a.expires_at || new Date(a.expires_at) > now;
+
+      const pinned = all.filter(a => a.pinned && notExpired(a));
+      const rest = all.filter(a => !a.pinned || !notExpired(a));
+
+      pinnedWrap.innerHTML = pinned.length
+        ? `<div class="eyebrow">LAST-MINUTE</div>` + pinned.map(a => announcementCard(a, true)).join('')
+        : '';
+
+      list.innerHTML = rest.length
+        ? rest.map(a => announcementCard(a, false)).join('')
+        : '<p class="muted">Nothing here yet.</p>';
+    }catch(e){
+      console.error(e);
+      list.innerHTML = '<p class="muted">Couldn\'t load announcements right now.</p>';
+    }
+  });
+</script>
+</body>
+</html>

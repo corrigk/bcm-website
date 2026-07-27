@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect — Boiler Catholic Men</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container">
+    <div class="eyebrow" style="color:var(--gold-bright);">SEC. 04 — CONNECT</div>
+    <h1 style="color:#fff;">Connect</h1>
+    <p style="color:var(--gold); max-width:56ch;">
+      New to BCM, or just want to stay in the loop? Here's every way in.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid-3">
+
+      <div class="panel stack">
+        <div class="tag">DAY-TO-DAY</div>
+        <h3>GroupMe</h3>
+        <p class="muted" style="margin:0;">Where most of the week-to-week banter and reminders happen.</p>
+        <a href="#" id="link-groupme" class="btn btn--ghost btn--small" target="_blank" rel="noopener">Join GroupMe</a>
+      </div>
+
+      <div class="panel stack">
+        <div class="tag">OFFICIAL</div>
+        <h3>Flocknote</h3>
+        <p class="muted" style="margin:0;">Official announcements and sign-ups land here — the source of truth.</p>
+        <a href="#" id="link-flocknote" class="btn btn--ghost btn--small" target="_blank" rel="noopener">Join Flocknote</a>
+      </div>
+
+      <div class="panel stack">
+        <div class="tag">FOLLOW</div>
+        <h3>Instagram</h3>
+        <p class="muted" style="margin:0;">Photos, reels, and event recaps.</p>
+        <a href="#" id="link-instagram" class="btn btn--ghost btn--small" target="_blank" rel="noopener">Follow @BCM</a>
+      </div>
+
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="grid-2">
+      <div>
+        <div class="eyebrow">NEW TO BCM?</div>
+        <h2>Start Here</h2>
+        <p class="muted" style="max-width:48ch;">
+          Show up to Large Group any Wednesday at 7:00 PM in the Newman Hall Great Room — no sign-up
+          needed, come as you are. Want a more personal intro first, or have questions before you show up?
+        </p>
+        <a href="#" id="link-email" class="btn" style="margin-top:8px;">Email the Team</a>
+      </div>
+      <div>
+        <div class="eyebrow">FORMS</div>
+        <h2>Sign-Ups</h2>
+        <div class="panel stack">
+          <p class="muted" style="margin:0;">
+            Retreats, small group placement, and service events are all handled through
+            Flocknote forms — join Flocknote above and you'll see current sign-ups there.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const links = BCM_CONFIG.LINKS || {};
+    document.getElementById('link-groupme').href = links.groupme || '#';
+    document.getElementById('link-flocknote').href = links.flocknote || '#';
+    document.getElementById('link-instagram').href = links.instagram || '#';
+    document.getElementById('link-email').href = links.email || '#';
+  });
+</script>
+</body>
+</html>
