@@ -55,7 +55,7 @@ function bcmRenderHeader(){
 function bcmRenderFooter(){
   const footer = document.getElementById('site-footer');
   if (!footer) return;
-  const links = (window.BCM_CONFIG && BCM_CONFIG.LINKS) || {};
+  const links = (typeof BCM_CONFIG !== 'undefined' && BCM_CONFIG.LINKS) || {};
   const base = bcmBasePath();
   footer.innerHTML = `
     <div class="footer-grid">

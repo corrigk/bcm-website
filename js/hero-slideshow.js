@@ -5,7 +5,7 @@ function bcmRenderHeroSlideshow(){
   const el = document.getElementById('hero-slideshow');
   if (!el) return;
 
-  const images = (window.BCM_CONFIG && BCM_CONFIG.HERO_IMAGES) || [];
+  const images = (typeof BCM_CONFIG !== 'undefined' && BCM_CONFIG.HERO_IMAGES) || [];
 
   if (images.length === 0){
     el.innerHTML = `
