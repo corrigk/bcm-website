@@ -22,14 +22,13 @@ const BCM_CONFIG = {
   // cross-fade automatically. Add/remove photos any time by editing
   // this list — no other code changes needed.
   HERO_IMAGES: [
-    "images/hero/cristian_sunset.jfif",
-    "images/hero/A10.jfif"
+    "images/hero/cristian_sunset.jfif"
   ],
 
   // External links shown in the footer / Connect page
   LINKS: {
-    groupme: "https://groupme.com/join_group/99395482/18wIAcnd",
-    flocknote: "https://boilercatholics.flocknote.com/BCM/settings/group",
+    groupme: "https://groupme.com/",
+    flocknote: "https://flocknote.com/",
     instagram: "https://instagram.com/",
     email: "mailto:bcm@purdue.edu"
   }
