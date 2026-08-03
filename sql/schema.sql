@@ -46,9 +46,11 @@ create table if not exists member_status (
 alter table member_status enable row level security;
 
 -- ---------- MEMBER PROFILES (directory info) ----------
--- References member_status (not auth.users directly) so that
--- Supabase can embed "member_status.approved" when querying the
--- directory, which is how we only show approved members.
+-- References member_status (not auth.users directly) as a matter of
+-- data modeling — every profile belongs to a status row. Visibility
+-- of a profile is enforced entirely by this table's own RLS policy
+-- below (via the is_approved_member() function), so the app can query
+-- member_profiles directly without needing read access to member_status.
 create table if not exists member_profiles (
   id uuid primary key references member_status(id) on delete cascade,
   name text not null,
@@ -132,12 +134,16 @@ create policy "Admins can delete team members" on team_members
 -- ===========================================================
 -- POLICIES — member_status
 -- ===========================================================
--- You can see your own row; approved members and admins can see
--- everyone's (needed so the directory query can check "is this
--- profile's owner approved," and so admins can see the request queue).
+-- You can see your own row; only admins can see everyone's (needed
+-- for the approval queue). Regular approved members do NOT get general
+-- read access here — the directory's "is this member approved" check
+-- happens through the is_approved_member() function instead (below),
+-- which runs with elevated privileges internally, so members never
+-- need direct access to each other's account email / admin status.
 drop policy if exists "Read own or approved-visible status" on member_status;
-create policy "Read own or approved-visible status" on member_status
-  for select using (id = auth.uid() or is_admin() or is_approved());
+drop policy if exists "Read own or admin-visible status" on member_status;
+create policy "Read own or admin-visible status" on member_status
+  for select using (id = auth.uid() or is_admin());
 
 -- Signing up creates your own row, always starting unapproved and
 -- non-admin — you cannot self-approve or self-promote at signup.

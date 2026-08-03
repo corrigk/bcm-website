@@ -151,10 +151,13 @@ const BCMData = (() => {
 
   async function getDirectory(){
     if (!client) return [...BCM_SAMPLE_DIRECTORY];
+    // No join needed here — member_profiles' own RLS policy already
+    // only returns approved members' profiles (via the is_approved_member
+    // security-definer function), so a plain select is enough and keeps
+    // this query independent of read access to member_status.
     const { data, error } = await client
       .from('member_profiles')
-      .select('*, member_status!inner(approved)')
-      .eq('member_status.approved', true)
+      .select('*')
       .order('name');
     if (error) { console.error('getDirectory', error); return []; }
     return data;
