@@ -20,6 +20,7 @@ bcm-site/
 ├── calendar.html         Calendar (Google Calendar embed)
 ├── announcements.html    Announcements + last-minute banner (location + photos optional)
 ├── prayer.html           Public Prayer Wall — post a request, named or anonymous
+├── reflections.html      Weekly Reflections archive (rotating officer devotional)
 ├── gallery.html          Public photo gallery
 ├── team.html             Org chart / "Who to Contact"
 ├── connect.html          GroupMe / Flocknote / Instagram / email links + contact form
@@ -148,6 +149,54 @@ remove majors, just edit the array in that file — it's plain text.
 The Month/Week/Agenda buttons on the Calendar page just swap that URL's
 view parameter, so no further setup is needed.
 
+### Setting up the "Pull from Calendar" button (optional)
+
+This is only needed for the "Pull from Calendar" button on the Weekly
+Reflections admin form. If you skip this, everything else on the site
+still works fine — you'd just type the events into that form by hand,
+same as you'd type them into Flocknote.
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com)
+   and create a project (or use an existing one) — this is free.
+2. Search for **"Google Calendar API"** in the top search bar → open it
+   → click **Enable**.
+3. Go to **APIs & Services → Credentials** → **+ Create Credentials →
+   API key**. Copy the key it gives you.
+4. Click **Edit API key** on the key you just made, and under **API
+   restrictions**, choose "Restrict key" and select only **Google
+   Calendar API** — this keeps the key from being usable for anything
+   else if it ever leaks (it'll be visible in your site's public JS,
+   same as your Supabase anon key).
+5. Paste that key into `GOOGLE_CALENDAR_API_KEY` in `js/config.js`.
+6. Make sure the calendar's sharing setting (step 3 above) is set to
+   "Make available to public" with **"See all event details"** — the
+   API needs the same public access the embed already uses.
+
+That's it — no further code changes needed, the button already knows
+which calendar to pull from (it reads the same `src=` calendar ID
+you're already using for the embed).
+
+### Your standing weekly meeting
+
+The Reflections admin form also has an **"Insert Regular Meeting"**
+button, separate from the calendar pull — it always works, with no
+setup, and doesn't depend on anything being entered in Google
+Calendar. It's driven by `STANDING_MEETING` in `js/config.js`:
+
+```js
+STANDING_MEETING: {
+  weekday: 4,          // 0 = Sunday ... 4 = Thursday, 6 = Saturday
+  time: "8:00 PM",
+  label: "Regular Meeting",
+  location: "Loeb Playhouse"
+}
+```
+
+Edit that block any time the day, time, or location changes — it's
+the one place that controls it. The button always inserts the
+*nearest upcoming* occurrence's date automatically, so you never have
+to update a date by hand.
+
 ---
 
 ## 5. Filling in your links
@@ -216,6 +265,14 @@ Once Supabase is connected and an officer has a login:
 - **Gallery tab:** upload one or more event photos at once, with an
   optional shared caption, or remove existing ones. Shows up publicly
   at `/gallery.html`.
+- **Reflections tab:** publish the weekly Thursday reflection — author,
+  a couple paragraphs, an optional photo, an optional quote/verse, and
+  an events list. Two quick-fill buttons help with the events box:
+  **Insert Regular Meeting** drops in your standing weekly meeting with
+  the correct upcoming date (see `STANDING_MEETING` in `js/config.js`),
+  and **Pull from Calendar** adds anything else on the Google Calendar.
+  Both just insert text into a normal textarea — edit freely before
+  publishing. Shows up publicly at `/reflections.html`, newest first.
 
 ---
 

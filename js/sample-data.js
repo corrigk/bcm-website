@@ -54,6 +54,20 @@ const BCM_SAMPLE_GALLERY = [
   { id: "g1", image_url: "images/hero/cristian_sunset.jpg", caption: "Sunset at the fall retreat", created_at: new Date(Date.now() - 1000*60*60*24*10).toISOString() }
 ];
 
+const BCM_SAMPLE_REFLECTIONS = [
+  {
+    id: "r1",
+    author_name: "Jack Bowen",
+    reflection_text: "This week reminded me how much showing up matters — even on the nights I didn't feel like going to Large Group, I left glad I did. Consistency in small things builds the habits that carry us through the harder seasons.",
+    quote_text: "Be not afraid.",
+    quote_source: "John 6:20",
+    image_url: "images/hero/cristian_sunset.jpg",
+    events_text: "RECENT:\nThu, Aug 14 — Large Group Worship Night, 7:00 PM @ Loeb Playhouse\n\nCOMING UP:\nThu, Aug 21 — Large Group, 7:00 PM @ Loeb Playhouse\nSat, Aug 23 — Fall Retreat Sign-Ups Open",
+    published_at: new Date(Date.now() - 1000*60*60*24*3).toISOString(),
+    created_at: new Date(Date.now() - 1000*60*60*24*3).toISOString()
+  }
+];
+
 const BCM_SAMPLE_TEAM = [
   { id: "t1", name: "Fr. Michael Otieno", role: "Chaplain", category: "Leadership", email: "chaplain@bcm.org", order: 1 },
   { id: "t2", name: "Jack Bowen", role: "President", category: "Leadership", email: "president@bcm.org", order: 2 },

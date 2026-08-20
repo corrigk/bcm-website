@@ -292,6 +292,33 @@ const BCMData = (() => {
     if (error) throw error;
   }
 
+  // ---- weekly reflections ----
+  async function getReflections(){
+    if (!client) return [...(window.BCM_SAMPLE_REFLECTIONS || [])];
+    const { data, error } = await client
+      .from('reflections')
+      .select('*')
+      .order('published_at', { ascending: false });
+    if (error) { console.error('getReflections', error); return []; }
+    return data;
+  }
+  async function createReflection(payload){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { data, error } = await client.from('reflections').insert(payload).select();
+    if (error) throw error;
+    return data[0];
+  }
+  async function updateReflection(id, payload){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { error } = await client.from('reflections').update(payload).eq('id', id);
+    if (error) throw error;
+  }
+  async function deleteReflection(id){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { error } = await client.from('reflections').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   return {
     isLive, getAnnouncements, getTeam,
     createAnnouncement, updateAnnouncement, deleteAnnouncement,
@@ -302,6 +329,7 @@ const BCMData = (() => {
     uploadMedia,
     getPrayerRequests, createPrayerRequest, deletePrayerRequest,
     submitContactMessage, listContactMessages, markMessageRead, deleteContactMessage,
-    getGalleryPhotos, createGalleryPhoto, deleteGalleryPhoto
+    getGalleryPhotos, createGalleryPhoto, deleteGalleryPhoto,
+    getReflections, createReflection, updateReflection, deleteReflection
   };
 })();

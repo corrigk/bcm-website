@@ -60,6 +60,7 @@
       <button class="btn btn--ghost tab-btn" data-tab="prayer">Prayer Wall</button>
       <button class="btn btn--ghost tab-btn" data-tab="messages">Messages</button>
       <button class="btn btn--ghost tab-btn" data-tab="gallery">Gallery</button>
+      <button class="btn btn--ghost tab-btn" data-tab="reflections">Reflections</button>
     </div>
 
     <!-- ===================== ANNOUNCEMENTS TAB ===================== -->
@@ -187,6 +188,49 @@
       <div class="eyebrow">EXISTING PHOTOS</div>
       <div id="gallery-admin-list" class="gallery-grid" style="margin-top:12px;"></div>
     </div>
+
+    <!-- ===================== REFLECTIONS TAB ===================== -->
+    <div id="tab-reflections" style="display:none;">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">WRITE THIS WEEK'S REFLECTION</div>
+        <form id="reflection-form" class="stack">
+          <input type="hidden" id="r-id">
+          <div class="field">
+            <label>Written By</label>
+            <input type="text" id="r-author" required placeholder="Whoever's turn it is this week">
+          </div>
+          <div class="field">
+            <label>Reflection</label>
+            <textarea id="r-text" required placeholder="A couple paragraphs — what's been on your heart this week." style="min-height:160px;"></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Quote / Verse (optional)</label><input type="text" id="r-quote-text" placeholder="&quot;Be not afraid.&quot;"></div>
+            <div class="field"><label>Source (optional)</label><input type="text" id="r-quote-source" placeholder="John 6:20"></div>
+          </div>
+          <div class="field">
+            <label>Image (optional)</label>
+            <input type="file" id="r-image" accept="image/*">
+            <div id="r-image-preview" class="img-thumb-row"></div>
+          </div>
+          <div class="field">
+            <label>Events — Past & Upcoming</label>
+            <div class="row" style="margin-bottom:8px;">
+              <button type="button" id="r-insert-standing" class="btn btn--ghost btn--small">Insert Regular Meeting</button>
+              <button type="button" id="r-pull-calendar" class="btn btn--ghost btn--small">Pull from Calendar</button>
+              <span id="r-pull-status" class="muted" style="display:none;"></span>
+            </div>
+            <textarea id="r-events" placeholder="Pulls from your Google Calendar, or type/edit this by hand — same as what you'd put in the Flocknote." style="min-height:140px;"></textarea>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn">Publish Reflection</button>
+            <button type="button" id="r-cancel" class="btn btn--ghost" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="eyebrow">PAST REFLECTIONS</div>
+      <div id="reflections-admin-list" class="stack" style="margin-top:12px;"></div>
+    </div>
   </div>
 </section>
 
@@ -197,6 +241,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/data.js"></script>
 <script src="../js/layout.js"></script>
+<script src="../js/calendar-events.js"></script>
 <script>
   // ---- auth guard ----
   document.addEventListener('DOMContentLoaded', async () => {
@@ -215,6 +260,7 @@
     loadPrayerRequests();
     loadMessages();
     loadGallery();
+    loadReflections();
   });
 
   document.getElementById('logout-btn').addEventListener('click', async () => {
@@ -233,6 +279,7 @@
       document.getElementById('tab-prayer').style.display = btn.dataset.tab === 'prayer' ? 'block' : 'none';
       document.getElementById('tab-messages').style.display = btn.dataset.tab === 'messages' ? 'block' : 'none';
       document.getElementById('tab-gallery').style.display = btn.dataset.tab === 'gallery' ? 'block' : 'none';
+      document.getElementById('tab-reflections').style.display = btn.dataset.tab === 'reflections' ? 'block' : 'none';
     });
   });
 
@@ -585,6 +632,137 @@
   async function removeGalleryPhoto(id){
     if (!confirm('Remove this photo from the gallery?')) return;
     try{ await BCMData.deleteGalleryPhoto(id); loadGallery(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== REFLECTIONS =====================
+  let rExistingImage = null; // url kept when editing (or null)
+  let rNewFile = null;       // File object staged for upload (or null)
+
+  function renderReflectionImagePreview(){
+    const wrap = document.getElementById('r-image-preview');
+    const url = rNewFile ? URL.createObjectURL(rNewFile) : rExistingImage;
+    wrap.innerHTML = url ? `
+      <div class="img-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="img-thumb-remove" id="r-image-remove">&times;</button>
+      </div>` : '';
+    const removeBtn = document.getElementById('r-image-remove');
+    if (removeBtn) removeBtn.addEventListener('click', () => {
+      rExistingImage = null; rNewFile = null;
+      renderReflectionImagePreview();
+    });
+  }
+  document.getElementById('r-image').addEventListener('change', (e) => {
+    rNewFile = e.target.files[0] || null;
+    renderReflectionImagePreview();
+  });
+
+  document.getElementById('r-insert-standing').addEventListener('click', () => {
+    const eventsField = document.getElementById('r-events');
+    const line = bcmStandingMeetingText();
+    if (!line) return;
+    eventsField.value = eventsField.value ? eventsField.value + '\n' + line : line;
+  });
+
+  document.getElementById('r-pull-calendar').addEventListener('click', async () => {
+    const status = document.getElementById('r-pull-status');
+    status.style.display = 'inline';
+    status.textContent = 'Loading events…';
+    try{
+      const text = await bcmFetchCalendarEventsText();
+      const eventsField = document.getElementById('r-events');
+      eventsField.value = eventsField.value
+        ? eventsField.value + '\n\n' + text
+        : text;
+      status.textContent = 'Pulled — edit freely below.';
+      setTimeout(() => { status.style.display = 'none'; }, 3000);
+    }catch(err){
+      status.textContent = err.message;
+    }
+  });
+
+  async function loadReflections(){
+    const list = document.getElementById('reflections-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getReflections();
+      list.innerHTML = all.length ? all.map(r => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(r.author_name)} — ${bcmFormatDate(r.published_at)}</h3>
+            <p class="muted" style="margin:0 0 4px; max-width:60ch;">${bcmEscape(bcmTruncate(r.reflection_text, 160))}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick="editReflection('${r.id}')">Edit</button>
+            <button class="btn btn--small btn--danger" onclick="removeReflection('${r.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No reflections posted yet.</p>';
+      window._bcmReflectionsCache = all;
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+
+  function editReflection(id){
+    const r = (window._bcmReflectionsCache || []).find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('r-id').value = r.id;
+    document.getElementById('r-author').value = r.author_name || '';
+    document.getElementById('r-text').value = r.reflection_text || '';
+    document.getElementById('r-quote-text').value = r.quote_text || '';
+    document.getElementById('r-quote-source').value = r.quote_source || '';
+    document.getElementById('r-events').value = r.events_text || '';
+    rExistingImage = r.image_url || null;
+    rNewFile = null;
+    renderReflectionImagePreview();
+    document.getElementById('r-cancel').style.display = 'inline-flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.getElementById('r-cancel').addEventListener('click', () => {
+    document.getElementById('reflection-form').reset();
+    document.getElementById('r-id').value = '';
+    rExistingImage = null; rNewFile = null;
+    renderReflectionImagePreview();
+    document.getElementById('r-cancel').style.display = 'none';
+  });
+
+  document.getElementById('reflection-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('r-id').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = rNewFile ? 'Uploading image…' : 'Publishing…';
+    try{
+      let imageUrl = rExistingImage;
+      if (rNewFile) imageUrl = await BCMData.uploadMedia(rNewFile, 'reflections');
+      const payload = {
+        author_name: document.getElementById('r-author').value,
+        reflection_text: document.getElementById('r-text').value,
+        quote_text: document.getElementById('r-quote-text').value || null,
+        quote_source: document.getElementById('r-quote-source').value || null,
+        image_url: imageUrl,
+        events_text: document.getElementById('r-events').value || null
+      };
+      if (id) await BCMData.updateReflection(id, payload);
+      else await BCMData.createReflection(payload);
+      e.target.reset();
+      document.getElementById('r-id').value = '';
+      rExistingImage = null; rNewFile = null;
+      renderReflectionImagePreview();
+      document.getElementById('r-cancel').style.display = 'none';
+      loadReflections();
+    }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Publish Reflection';
+    }
+  });
+
+  async function removeReflection(id){
+    if (!confirm('Delete this reflection?')) return;
+    try{ await BCMData.deleteReflection(id); loadReflections(); }
     catch(e){ alert(e.message); }
   }
 </script>

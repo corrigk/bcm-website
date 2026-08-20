@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Reflections — Boiler Catholic Men</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container">
+    <div class="eyebrow" style="color:var(--gold-bright);">THURSDAY REFLECTIONS</div>
+    <h1 style="color:#fff;">Weekly Reflections</h1>
+    <p style="color:var(--gold); max-width:56ch;">
+      A rotating word from our own guys each week — what's coming up, what just happened,
+      and something worth sitting with.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div id="reflections-list" class="stack" style="max-width:72ch; margin:0 auto;">
+      <p class="muted">Loading…</p>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  function reflectionCard(r){
+    const image = r.image_url ? `<img src="${r.image_url}" alt="" style="width:100%; height:auto; border:1px solid var(--paper-line); margin:14px 0;">` : '';
+    const quote = r.quote_text ? `
+      <blockquote style="margin:16px 0; padding-left:16px; border-left:3px solid var(--gold-bright); font-style:italic;">
+        “${bcmEscape(r.quote_text)}”
+        ${r.quote_source ? `<footer class="muted" style="font-style:normal; margin-top:4px;">— ${bcmEscape(r.quote_source)}</footer>` : ''}
+      </blockquote>` : '';
+    const events = r.events_text ? `
+      <div class="panel" style="margin-top:18px; font-size:0.9rem;">
+        <div class="eyebrow" style="margin-bottom:8px;">EVENTS</div>
+        <pre style="white-space:pre-wrap; font-family:var(--f-body); margin:0;">${bcmEscape(r.events_text)}</pre>
+      </div>` : '';
+    return `
+      <div class="panel">
+        <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+          <span class="tag">${bcmEscape(r.author_name)}</span>
+          <span class="tag">${bcmFormatDate(r.published_at)}</span>
+        </div>
+        ${image}
+        <p style="white-space:pre-line;">${bcmEscape(r.reflection_text)}</p>
+        ${quote}
+        ${events}
+      </div>
+    `;
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const list = document.getElementById('reflections-list');
+    try{
+      const all = await BCMData.getReflections();
+      list.innerHTML = all.length ? all.map(reflectionCard).join('') : '<p class="muted">No reflections posted yet — check back Thursday.</p>';
+    }catch(e){
+      console.error(e);
+      list.innerHTML = '<p class="muted">Couldn\'t load reflections right now.</p>';
+    }
+  });
+</script>
+</body>
+</html>

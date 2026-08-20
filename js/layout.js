@@ -8,11 +8,14 @@ const BCM_NAV = [
   { href: "index.html", label: "Home" },
   { href: "calendar.html", label: "Calendar" },
   { href: "announcements.html", label: "Announcements" },
-  { href: "prayer.html", label: "Prayer" },
-  { href: "gallery.html", label: "Gallery" },
-  { href: "team.html", label: "Team" },
+  { href: "reflections.html", label: "Reflections" },
   { href: "directory/login.html", label: "Directory" },
-  { href: "connect.html", label: "Connect" }
+  { label: "More", children: [
+      { href: "prayer.html", label: "Prayer Wall" },
+      { href: "gallery.html", label: "Gallery" },
+      { href: "team.html", label: "Who to Contact" },
+      { href: "connect.html", label: "Connect" }
+  ] }
 ];
 
 function bcmBasePath(){
@@ -27,6 +30,18 @@ function bcmRenderHeader(){
   const here = base ? parts.slice(-2).join('/') : (parts.pop() || 'index.html');
 
   const links = BCM_NAV.map(item => {
+    if (item.children){
+      const isActiveGroup = item.children.some(c => c.href === here);
+      const childLinks = item.children.map(c => {
+        const active = c.href === here ? ' class="active"' : '';
+        return `<a href="${base}${c.href}"${active}>${c.label}</a>`;
+      }).join('');
+      return `
+        <li class="nav-more">
+          <button type="button" class="nav-more-toggle${isActiveGroup ? ' active' : ''}">${item.label} ▾</button>
+          <div class="nav-more-menu">${childLinks}</div>
+        </li>`;
+    }
     const active = item.href === here ? ' class="active"' : '';
     return `<li><a href="${base}${item.href}"${active}>${item.label}</a></li>`;
   }).join('');
@@ -52,6 +67,20 @@ function bcmRenderHeader(){
     const open = navLinks.classList.toggle('open');
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
+
+  // "More" dropdown: click to open/close, click outside to close
+  document.querySelectorAll('.nav-more-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const menu = btn.nextElementSibling;
+      const isOpen = menu.classList.contains('open');
+      document.querySelectorAll('.nav-more-menu.open').forEach(m => m.classList.remove('open'));
+      if (!isOpen) menu.classList.add('open');
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.nav-more-menu.open').forEach(m => m.classList.remove('open'));
+  });
 }
 
 function bcmRenderFooter(){
@@ -72,6 +101,7 @@ function bcmRenderFooter(){
         <h4>Pages</h4>
         <a href="${base}calendar.html">Calendar</a>
         <a href="${base}announcements.html">Announcements</a>
+        <a href="${base}reflections.html">Weekly Reflections</a>
         <a href="${base}prayer.html">Prayer Wall</a>
         <a href="${base}gallery.html">Gallery</a>
         <a href="${base}team.html">Who to Contact</a>

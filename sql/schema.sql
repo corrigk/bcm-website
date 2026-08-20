@@ -55,6 +55,20 @@ create table if not exists gallery_photos (
 );
 alter table gallery_photos enable row level security;
 
+-- ---------- WEEKLY REFLECTIONS ----------
+create table if not exists reflections (
+  id uuid primary key default gen_random_uuid(),
+  author_name text not null,
+  reflection_text text not null,
+  quote_text text,
+  quote_source text,
+  image_url text,
+  events_text text,
+  published_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+alter table reflections enable row level security;
+
 -- ---------- TEAM MEMBERS (ORG CHART) ----------
 create table if not exists team_members (
   id uuid primary key default gen_random_uuid(),
@@ -223,6 +237,26 @@ create policy "Admins can insert gallery photos" on gallery_photos
 
 drop policy if exists "Admins can delete gallery photos" on gallery_photos;
 create policy "Admins can delete gallery photos" on gallery_photos
+  for delete to authenticated using (is_admin());
+
+-- ===========================================================
+-- POLICIES — reflections
+-- (public can read; only admins can write/edit/remove)
+-- ===========================================================
+drop policy if exists "Public can read reflections" on reflections;
+create policy "Public can read reflections" on reflections
+  for select using (true);
+
+drop policy if exists "Admins can insert reflections" on reflections;
+create policy "Admins can insert reflections" on reflections
+  for insert to authenticated with check (is_admin());
+
+drop policy if exists "Admins can update reflections" on reflections;
+create policy "Admins can update reflections" on reflections
+  for update to authenticated using (is_admin());
+
+drop policy if exists "Admins can delete reflections" on reflections;
+create policy "Admins can delete reflections" on reflections
   for delete to authenticated using (is_admin());
 
 -- ===========================================================
