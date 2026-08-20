@@ -52,22 +52,8 @@
         <div class="eyebrow">SEC. 01 — UPCOMING</div>
         <h2>This Week</h2>
         <p class="muted">Weekly gatherings, Holy Hour, and small groups — full calendar has all the detail.</p>
-        <div class="panel stack" style="margin-top:18px;">
-          <div class="row" style="justify-content:space-between;">
-            <div>
-              <div class="tag">THU · 8:00 PM</div>
-              <h3 style="margin-top:8px;">Large Group</h3>
-              <p class="muted" style="margin:0;">Talk, worship, sports, and fellowship — Newman Hall or Otherwise Specified.</p>
-            </div>
-          </div>
-          <hr class="hr">
-          <div class="row" style="justify-content:space-between;">
-            <div>
-              <div class="tag">FRI · 6:00 PM</div>
-              <h3 style="margin-top:8px;">Holy Hour &amp; Confession</h3>
-              <p class="muted" style="margin:0;">Quiet prayer at St. Francis Perpetual Adoration Chapel.</p>
-            </div>
-          </div>
+        <div id="home-this-week" class="panel stack" style="margin-top:18px;">
+          <p class="muted" style="margin:0;">Loading…</p>
         </div>
         <a href="calendar.html" class="btn btn--ghost" style="margin-top:18px;">Full Calendar →</a>
       </div>
@@ -104,6 +90,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script src="js/layout.js"></script>
+<script src="js/regular-events.js"></script>
 <script src="js/hero-slideshow.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', async () => {
@@ -123,6 +110,35 @@
     }catch(e){
       console.error(e);
       el.innerHTML = '<p class="muted">Couldn\'t load announcements right now.</p>';
+    }
+
+    const thisWeekEl = document.getElementById('home-this-week');
+    try{
+      let team = [];
+      try{ team = await BCMData.getTeam(); }catch(e){ /* leader lookup is best-effort */ }
+      const findLeader = (keyword) => keyword ? team.find(m => (m.role || '').toLowerCase().includes(keyword)) : null;
+
+      const upcoming = bcmUpcomingRegularEvents(2);
+      thisWeekEl.innerHTML = upcoming.map((ev, i) => {
+        const leader = findLeader(ev.leaderKeyword);
+        const leaderLine = leader
+          ? `<p style="margin:6px 0 0; font-size:0.85rem;">Led by ${leader.email ? `<a href="mailto:${leader.email}">${bcmEscape(leader.name)}</a>` : bcmEscape(leader.name)}</p>`
+          : '';
+        return `
+          ${i > 0 ? '<hr class="hr">' : ''}
+          <div class="row" style="justify-content:space-between;">
+            <div>
+              <div class="tag">${ev.day} · ${ev.time}</div>
+              <h3 style="margin-top:8px;">${bcmEscape(ev.title)}</h3>
+              <p class="muted" style="margin:0;">${bcmEscape(ev.description)}</p>
+              ${leaderLine}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }catch(e){
+      console.error(e);
+      thisWeekEl.innerHTML = '<p class="muted" style="margin:0;">Check the full calendar for what\'s next.</p>';
     }
   });
 </script>

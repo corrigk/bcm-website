@@ -68,38 +68,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/data.js"></script>
 <script src="js/layout.js"></script>
+<script src="js/regular-events.js"></script>
 <script>
-  // Edit this list any time your weekly schedule changes — day, time,
-  // title, and description are all plain text. For events with a
-  // leaderKeyword, the card automatically looks up whoever's role on
-  // the org chart (team.html, added via Admin → Org Chart) contains
-  // that keyword and links to them — no need to hardcode a name here.
-  const REGULAR_EVENTS = [
-    {
-      day: "MON", time: "6:00 PM", title: "Rosary Walk",
-      description: "Meet in the Gathering Space and pray a rosary together as we walk.",
-      leaderKeyword: "rosary walk"
-    },
-    {
-      day: "THU", time: "6:00 PM", title: "The Bacon Boys",
-      description: "Meet in the Gathering Space, then head over to Mad Mushroom Pizza together.",
-      leaderKeyword: "bacon boys"
-    },
-    {
-      day: "THU", time: "8:00 PM", title: "Large Group",
-      description: "Our main weekly gathering — faith, fun, sports, and fellowship."
-    },
-    {
-      day: "FRI", time: "6:00 PM", title: "Holy Hour",
-      description: "Adoration and quiet prayer together, typically held at the St. Francis Adoration Chapel.",
-      leaderKeyword: "holy hour"
-    },
-    {
-      day: "SAT", time: "Varies", title: "Saturday Activities",
-      description: "First Saturday Devotion, a golf outing, or some other fun activity — check Announcements for what's on this week."
-    }
-  ];
-
   function buildEmbedUrl(mode){
     if (!BCM_CONFIG.GOOGLE_CALENDAR_EMBED_URL) return null;
     const url = new URL(BCM_CONFIG.GOOGLE_CALENDAR_EMBED_URL);
