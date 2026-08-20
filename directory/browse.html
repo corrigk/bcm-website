@@ -68,6 +68,7 @@
 
   function cardHtml(m){
     const sub = [m.job_title, m.company].filter(Boolean).join(' at ');
+    const showContact = m.ok_to_contact && (m.phone || m.email);
     return `
       <div class="panel dir-card stack">
         <div class="row" style="gap:12px;">
@@ -80,6 +81,12 @@
         ${sub ? `<div class="tag" style="align-self:flex-start;">${bcmEscape(sub)}</div>` : ''}
         ${m.location ? `<p class="muted" style="margin:0; font-size:0.85rem;">${bcmEscape(m.location)}</p>` : ''}
         ${m.bio ? `<p style="margin:4px 0 0; font-size:0.92rem;">${bcmEscape(m.bio)}</p>` : ''}
+        ${showContact ? `
+          <div style="margin-top:4px; font-size:0.85rem;">
+            ${m.phone ? `<div>📞 <a href="tel:${bcmEscape(m.phone)}">${bcmEscape(m.phone)}</a></div>` : ''}
+            ${m.email ? `<div>✉️ <a href="mailto:${bcmEscape(m.email)}">${bcmEscape(m.email)}</a></div>` : ''}
+          </div>
+        ` : ''}
         ${m.linkedin ? `<a href="${m.linkedin}" target="_blank" rel="noopener" class="btn btn--ghost btn--small" style="align-self:flex-start; margin-top:4px;">LinkedIn</a>` : ''}
       </div>
     `;

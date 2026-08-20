@@ -30,14 +30,28 @@ const BCM_SAMPLE_ANNOUNCEMENTS = [
 ];
 
 const BCM_SAMPLE_DIRECTORY = [
-  { id: "d1", name: "Jack Bowen", grad_year: 2026, major: "Mechanical Engineering", is_alumni: false, company: "Cummins (Intern)", job_title: "Engineering Intern", location: "West Lafayette, IN", linkedin: "", bio: "President this year — happy to talk about anything BCM." },
-  { id: "d2", name: "Andrew Kim", grad_year: 2022, major: "Computer Science", is_alumni: true, company: "Rolls-Royce", job_title: "Software Engineer", location: "Indianapolis, IN", linkedin: "", bio: "Was Small Groups Coordinator '21-'22. Glad to mentor underclassmen." },
-  { id: "d3", name: "Marcus DeYoung", grad_year: 2024, major: "Industrial Engineering", is_alumni: true, company: "Deloitte", job_title: "Consultant", location: "Chicago, IL", linkedin: "", bio: "" },
-  { id: "d4", name: "Nate Ostrowski", grad_year: 2027, major: "Electrical Engineering", is_alumni: false, company: "", job_title: "", location: "West Lafayette, IN", linkedin: "", bio: "Small Groups Coordinator." }
+  { id: "d1", name: "Jack Bowen", grad_year: 2026, major: "Mechanical Engineering", is_alumni: false, company: "Cummins (Intern)", job_title: "Engineering Intern", location: "West Lafayette, IN", linkedin: "", phone: "(765) 555-0101", email: "", ok_to_contact: true, bio: "President this year — happy to talk about anything BCM." },
+  { id: "d2", name: "Andrew Kim", grad_year: 2022, major: "Computer Science", is_alumni: true, company: "Rolls-Royce", job_title: "Software Engineer", location: "Indianapolis, IN", linkedin: "", phone: "", email: "", ok_to_contact: false, bio: "Was Small Groups Coordinator '21-'22. Glad to mentor underclassmen." },
+  { id: "d3", name: "Marcus DeYoung", grad_year: 2024, major: "Industrial Engineering", is_alumni: true, company: "Deloitte", job_title: "Consultant", location: "Chicago, IL", linkedin: "", phone: "", email: "", ok_to_contact: false, bio: "" },
+  { id: "d4", name: "Nate Ostrowski", grad_year: 2027, major: "Electrical Engineering", is_alumni: false, company: "", job_title: "", location: "West Lafayette, IN", linkedin: "", phone: "", email: "nate.o@purdue.edu", ok_to_contact: true, bio: "Small Groups Coordinator." }
 ];
 
 const BCM_SAMPLE_MEMBER_REQUESTS = [
   { id: "p1", email: "freshman.guy@purdue.edu", name: "Tyler Novak", requested_at: new Date(Date.now() - 1000*60*60*20).toISOString(), approved: false, is_admin: false }
+];
+
+const BCM_SAMPLE_PRAYER_REQUESTS = [
+  { id: "pr1", request_text: "Please pray for my grandmother's surgery next week — for the doctors' hands and her recovery.", requester_name: "Tyler N.", is_anonymous: false, created_at: new Date(Date.now() - 1000*60*60*10).toISOString() },
+  { id: "pr2", request_text: "Pray for peace and discernment as I decide on a summer internship.", requester_name: null, is_anonymous: true, created_at: new Date(Date.now() - 1000*60*60*30).toISOString() },
+  { id: "pr3", request_text: "For my family back home — a hard season for us right now.", requester_name: "Marcus D.", is_anonymous: false, created_at: new Date(Date.now() - 1000*60*60*72).toISOString() }
+];
+
+const BCM_SAMPLE_CONTACT_MESSAGES = [
+  { id: "cm1", name: "Sam Rivera", email: "srivera@purdue.edu", message: "Hey, I'm a freshman interested in getting involved — when's the next Large Group?", is_read: false, created_at: new Date(Date.now() - 1000*60*60*5).toISOString() }
+];
+
+const BCM_SAMPLE_GALLERY = [
+  { id: "g1", image_url: "images/hero/cristian_sunset.jpg", caption: "Sunset at the fall retreat", created_at: new Date(Date.now() - 1000*60*60*24*10).toISOString() }
 ];
 
 const BCM_SAMPLE_TEAM = [

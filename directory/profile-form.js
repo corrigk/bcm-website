@@ -34,6 +34,18 @@ async function renderProfileForm(container, userId){
           <div class="field"><label>Location</label><input type="text" id="p-location" placeholder="City, State"></div>
           <div class="field"><label>LinkedIn (optional)</label><input type="url" id="p-linkedin" placeholder="https://linkedin.com/in/..."></div>
         </div>
+        <div class="grid-2">
+          <div class="field"><label>Phone (optional)</label><input type="tel" id="p-phone" placeholder="(765) 555-0100"></div>
+          <div class="field"><label>Contact Email (optional)</label><input type="email" id="p-email" placeholder="Different from your login email? Put it here."></div>
+        </div>
+        <label class="row" style="gap:8px;">
+          <input type="checkbox" id="p-ok-to-contact">
+          <span>Other members can see the phone/email above and reach out to me</span>
+        </label>
+        <p class="muted" style="margin:-8px 0 0; font-size:0.82rem;">
+          Leave phone/email blank if you'd rather not share them — everything on this form
+          is optional, and nothing here shows in the directory unless you check this box.
+        </p>
         <div class="field">
           <label>Short Bio (optional)</label>
           <textarea id="p-bio" placeholder="A line or two — what you're up to, how guys can reach you, etc."></textarea>
@@ -48,6 +60,7 @@ async function renderProfileForm(container, userId){
 
   const styleFields = () => {
     container.querySelectorAll('input, select, textarea').forEach(el => {
+      if (el.type === 'checkbox' || el.type === 'radio') return;
       el.style.padding = '10px';
       el.style.border = '1px solid var(--paper-line)';
       el.style.background = '#fff';
@@ -81,6 +94,9 @@ async function renderProfileForm(container, userId){
       container.querySelector('#p-job-title').value = profile.job_title || '';
       container.querySelector('#p-location').value = profile.location || '';
       container.querySelector('#p-linkedin').value = profile.linkedin || '';
+      container.querySelector('#p-phone').value = profile.phone || '';
+      container.querySelector('#p-email').value = profile.email || '';
+      container.querySelector('#p-ok-to-contact').checked = !!profile.ok_to_contact;
       container.querySelector('#p-bio').value = profile.bio || '';
     }
   }catch(e){ console.error(e); }
@@ -99,6 +115,9 @@ async function renderProfileForm(container, userId){
       job_title: container.querySelector('#p-job-title').value,
       location: container.querySelector('#p-location').value,
       linkedin: container.querySelector('#p-linkedin').value,
+      phone: container.querySelector('#p-phone').value,
+      email: container.querySelector('#p-email').value,
+      ok_to_contact: container.querySelector('#p-ok-to-contact').checked,
       bio: container.querySelector('#p-bio').value
     };
     try{

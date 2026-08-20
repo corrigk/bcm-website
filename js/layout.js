@@ -8,7 +8,9 @@ const BCM_NAV = [
   { href: "index.html", label: "Home" },
   { href: "calendar.html", label: "Calendar" },
   { href: "announcements.html", label: "Announcements" },
-  { href: "team.html", label: "Who to Contact" },
+  { href: "prayer.html", label: "Prayer" },
+  { href: "gallery.html", label: "Gallery" },
+  { href: "team.html", label: "Team" },
   { href: "directory/login.html", label: "Directory" },
   { href: "connect.html", label: "Connect" }
 ];
@@ -70,6 +72,8 @@ function bcmRenderFooter(){
         <h4>Pages</h4>
         <a href="${base}calendar.html">Calendar</a>
         <a href="${base}announcements.html">Announcements</a>
+        <a href="${base}prayer.html">Prayer Wall</a>
+        <a href="${base}gallery.html">Gallery</a>
         <a href="${base}team.html">Who to Contact</a>
         <a href="${base}directory/login.html">Member Directory</a>
         <a href="${base}connect.html">Connect</a>
