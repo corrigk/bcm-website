@@ -188,7 +188,7 @@ STANDING_MEETING: {
   weekday: 4,          // 0 = Sunday ... 4 = Thursday, 6 = Saturday
   time: "8:00 PM",
   label: "Regular Meeting",
-  location: "Loeb Playhouse"
+  location: "Newman Hall"
 }
 ```
 

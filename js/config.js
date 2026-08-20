@@ -20,7 +20,7 @@ const BCM_CONFIG = {
   // Weekly Reflections admin form. Leave blank to skip that feature;
   // everything else on the site works fine without it. See README.md
   // "Setting up the 'Pull from Calendar' button" for how to get this.
-  GOOGLE_CALENDAR_API_KEY: "",
+  GOOGLE_CALENDAR_API_KEY: "AIzaSyBiweQEcN7uy39D-EVzDdzBmayE15WUvh0",
 
   // Your standing weekly meeting — the "Insert Regular Meeting" button
   // on the Reflections admin form uses this to drop in a ready-made
