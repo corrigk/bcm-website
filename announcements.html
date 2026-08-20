@@ -44,6 +44,10 @@
 <script src="js/layout.js"></script>
 <script>
   function announcementCard(a, pinnedStyle){
+    const location = a.location ? `<p class="muted" style="margin:-4px 0 8px;">📍 ${bcmEscape(a.location)}</p>` : '';
+    const images = (a.image_urls && a.image_urls.length)
+      ? `<div class="ann-images">${a.image_urls.map(u => `<img src="${u}" alt="">`).join('')}</div>`
+      : '';
     return `
       <div class="panel${pinnedStyle ? '' : ''}" style="${pinnedStyle ? 'border-color:var(--urgent);' : ''}">
         <div class="row" style="justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
@@ -51,7 +55,9 @@
           <span class="tag">${bcmFormatDate(a.created_at)}</span>
         </div>
         <h3>${bcmEscape(a.title)}</h3>
+        ${location}
         <p style="white-space:pre-line;">${bcmEscape(a.body)}</p>
+        ${images}
       </div>
     `;
   }

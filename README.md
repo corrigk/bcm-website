@@ -18,12 +18,15 @@ Pages, Netlify, or any static host.
 bcm-site/
 ├── index.html            Home page
 ├── calendar.html         Calendar (Google Calendar embed)
-├── announcements.html    Announcements + last-minute banner
+├── announcements.html    Announcements + last-minute banner (location + photos optional)
+├── prayer.html           Public Prayer Wall — post a request, named or anonymous
+├── gallery.html          Public photo gallery
 ├── team.html             Org chart / "Who to Contact"
-├── connect.html          GroupMe / Flocknote / Instagram / email links
+├── connect.html          GroupMe / Flocknote / Instagram / email links + contact form
 ├── admin/
 │   ├── login.html        Admin (officer) login
-│   └── dashboard.html    Manage announcements, org chart, and member requests
+│   └── dashboard.html    Manage announcements, org chart, member requests, prayer wall,
+│                         contact messages, and the photo gallery
 ├── directory/
 │   ├── signup.html       Request directory access
 │   ├── login.html        Member login
@@ -56,12 +59,20 @@ your officers add announcements from a web form instead of editing code.
    easiest), and click **New Project**. Free tier is plenty for this.
 2. Once it's created, open **SQL Editor** in the left sidebar → **New
    Query** → paste in the entire contents of `sql/schema.sql` from this
-   project → **Run**. This creates the `announcements` and
-   `team_members` tables with the right permissions.
+   project → **Run**. This creates the `announcements`, `team_members`,
+   `prayer_requests`, `contact_messages`, and `gallery_photos` tables
+   (with the right permissions), plus a public `bcm-media` storage
+   bucket for announcement photos and gallery uploads.
 3. Go to **Project Settings → API**. Copy:
    - **Project URL** → paste into `SUPABASE_URL` in `js/config.js`
    - **anon public** key → paste into `SUPABASE_ANON_KEY` in `js/config.js`
 That's it for the database — the public pages will now read live data.
+
+**Already had Supabase set up before this update?** Just re-run the
+whole `sql/schema.sql` file again in the SQL Editor — it's safe to
+run repeatedly (`create table if not exists`, `add column if not
+exists`, etc.), and it will add the new tables/columns/bucket without
+touching your existing data.
 
 **Note:** the current setup lets *any* admin edit or delete *any*
 announcement, team member, or member request — there's no per-role
@@ -185,7 +196,9 @@ Once Supabase is connected and an officer has a login:
 - Go to `/admin/login.html`, sign in.
 - **Announcements tab:** add a title + body, optionally check
   "Last-Minute" to pin it and show the red banner site-wide, optionally
-  set an expiration date so it auto-unpins itself.
+  set an expiration date so it auto-unpins itself, and optionally add a
+  **location** and/or one or more **photos** (uploaded straight from
+  your device — no separate image hosting needed).
 - **Org Chart tab:** add/edit/remove team members — Name, Role,
   Category (e.g. "Leadership," "Ministry Teams" — new categories just
   become new tiers on the chart automatically), Email, and an Order
@@ -194,16 +207,26 @@ Once Supabase is connected and an officer has a login:
   access, promote an approved member to admin, or revoke access. Anyone
   can request access at `/directory/signup.html`; nothing they submit
   is visible to other members until an admin approves them.
+- **Prayer Wall tab:** moderate the public Prayer Wall (`/prayer.html`)
+  — anyone can post a request there, with their name or anonymously;
+  admins can remove anything that shouldn't stay up.
+- **Messages tab:** read messages sent through the Connect page's
+  contact form, mark them read, or delete them. There's no outgoing
+  email yet — check this tab (or the dashboard generally) periodically.
+- **Gallery tab:** upload one or more event photos at once, with an
+  optional shared caption, or remove existing ones. Shows up publicly
+  at `/gallery.html`.
 
 ---
 
 ## 9. Ideas for later (not built yet)
 
 - A short "About / What We Believe" page.
-- Photo galleries from retreats/events.
 - Small group sign-up form feeding directly into Supabase.
 - Email digest (weekly announcement summary) via a scheduled function.
 - Per-field privacy toggles in the directory (e.g. hide employer, keep name/major visible).
-- Email notification to admins when a new directory request comes in (Supabase Edge Function + Resend/SendGrid).
+- Email notification to admins when a new directory request or contact message comes in
+  (Supabase Edge Function + Resend/SendGrid) — right now these just sit in the admin dashboard
+  until someone checks.
 
 None of these are hard to add on top of this structure when you're ready.

@@ -21,6 +21,40 @@ create table if not exists announcements (
 );
 alter table announcements enable row level security;
 
+-- Optional location + image(s) on an announcement. Safe to re-run.
+alter table announcements add column if not exists location text;
+alter table announcements add column if not exists image_urls text[] not null default '{}'::text[];
+
+-- ---------- PRAYER REQUESTS ----------
+create table if not exists prayer_requests (
+  id uuid primary key default gen_random_uuid(),
+  request_text text not null,
+  requester_name text,
+  is_anonymous boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table prayer_requests enable row level security;
+
+-- ---------- CONTACT MESSAGES ----------
+create table if not exists contact_messages (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  message text not null,
+  is_read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table contact_messages enable row level security;
+
+-- ---------- GALLERY PHOTOS ----------
+create table if not exists gallery_photos (
+  id uuid primary key default gen_random_uuid(),
+  image_url text not null,
+  caption text,
+  created_at timestamptz not null default now()
+);
+alter table gallery_photos enable row level security;
+
 -- ---------- TEAM MEMBERS (ORG CHART) ----------
 create table if not exists team_members (
   id uuid primary key default gen_random_uuid(),
@@ -130,6 +164,80 @@ drop policy if exists "Authenticated users can delete team members" on team_memb
 drop policy if exists "Admins can delete team members" on team_members;
 create policy "Admins can delete team members" on team_members
   for delete to authenticated using (is_admin());
+
+-- ===========================================================
+-- POLICIES — prayer_requests
+-- (anyone, including anonymous visitors, can post and read; only
+-- admins can remove a request, for moderation)
+-- ===========================================================
+drop policy if exists "Public can read prayer requests" on prayer_requests;
+create policy "Public can read prayer requests" on prayer_requests
+  for select using (true);
+
+drop policy if exists "Public can submit prayer requests" on prayer_requests;
+create policy "Public can submit prayer requests" on prayer_requests
+  for insert with check (true);
+
+drop policy if exists "Admins can delete prayer requests" on prayer_requests;
+create policy "Admins can delete prayer requests" on prayer_requests
+  for delete to authenticated using (is_admin());
+
+-- ===========================================================
+-- POLICIES — contact_messages
+-- (anyone can submit; only admins can read/manage — this is your
+-- inbox, not a public board)
+-- ===========================================================
+drop policy if exists "Public can submit contact messages" on contact_messages;
+create policy "Public can submit contact messages" on contact_messages
+  for insert with check (true);
+
+drop policy if exists "Admins can read contact messages" on contact_messages;
+create policy "Admins can read contact messages" on contact_messages
+  for select to authenticated using (is_admin());
+
+drop policy if exists "Admins can update contact messages" on contact_messages;
+create policy "Admins can update contact messages" on contact_messages
+  for update to authenticated using (is_admin());
+
+drop policy if exists "Admins can delete contact messages" on contact_messages;
+create policy "Admins can delete contact messages" on contact_messages
+  for delete to authenticated using (is_admin());
+
+-- ===========================================================
+-- POLICIES — gallery_photos
+-- (public can view; only admins can add/remove)
+-- ===========================================================
+drop policy if exists "Public can read gallery photos" on gallery_photos;
+create policy "Public can read gallery photos" on gallery_photos
+  for select using (true);
+
+drop policy if exists "Admins can insert gallery photos" on gallery_photos;
+create policy "Admins can insert gallery photos" on gallery_photos
+  for insert to authenticated with check (is_admin());
+
+drop policy if exists "Admins can delete gallery photos" on gallery_photos;
+create policy "Admins can delete gallery photos" on gallery_photos
+  for delete to authenticated using (is_admin());
+
+-- ===========================================================
+-- STORAGE — public bucket for announcement + gallery images
+-- (public can view any file in it; only admins can upload/delete)
+-- ===========================================================
+insert into storage.buckets (id, name, public)
+values ('bcm-media', 'bcm-media', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Public can view bcm-media" on storage.objects;
+create policy "Public can view bcm-media" on storage.objects
+  for select using (bucket_id = 'bcm-media');
+
+drop policy if exists "Admins can upload bcm-media" on storage.objects;
+create policy "Admins can upload bcm-media" on storage.objects
+  for insert to authenticated with check (bucket_id = 'bcm-media' and is_admin());
+
+drop policy if exists "Admins can delete bcm-media" on storage.objects;
+create policy "Admins can delete bcm-media" on storage.objects
+  for delete to authenticated using (bucket_id = 'bcm-media' and is_admin());
 
 -- ===========================================================
 -- POLICIES — member_status

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prayer Wall — Boiler Catholic Men</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--blueprint); color:var(--parchment);">
+  <div class="container">
+    <div class="eyebrow" style="color:var(--gold-bright);">PRAYER WALL</div>
+    <h1 style="color:#fff;">Prayer Requests</h1>
+    <p style="color:var(--gold); max-width:56ch;">
+      Post a request, with your name or anonymously — the brotherhood is praying for you.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="grid-2" style="align-items:start;">
+
+      <div>
+        <div class="eyebrow">SUBMIT A REQUEST</div>
+        <div class="panel">
+          <form id="prayer-form" class="stack">
+            <div class="field">
+              <label>Your Prayer Request</label>
+              <textarea id="pr-text" required placeholder="What's on your heart?"></textarea>
+            </div>
+            <label class="row" style="gap:8px;">
+              <input type="checkbox" id="pr-anonymous"> <span>Post anonymously</span>
+            </label>
+            <div class="field" id="pr-name-field">
+              <label>Your Name (optional)</label>
+              <input type="text" id="pr-name" placeholder="Shown next to your request">
+            </div>
+            <button type="submit" class="btn">Submit Request</button>
+            <p id="pr-success" class="muted" style="display:none;">Thank you — your request has been posted.</p>
+            <p id="pr-error" class="muted" style="color:#B23A24; display:none;"></p>
+          </form>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow">THE WALL</div>
+        <div id="prayer-list" class="stack">
+          <p class="muted">Loading…</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="js/config.js"></script>
+<script src="js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/data.js"></script>
+<script src="js/layout.js"></script>
+<script>
+  function prayerCard(p){
+    const who = (p.is_anonymous || !p.requester_name) ? 'Anonymous' : bcmEscape(p.requester_name);
+    return `
+      <div class="panel">
+        <div class="row" style="justify-content:space-between; margin-bottom:8px;">
+          <span class="tag">${who}</span>
+          <span class="tag">${bcmFormatDate(p.created_at)}</span>
+        </div>
+        <p style="white-space:pre-line; margin:0;">${bcmEscape(p.request_text)}</p>
+      </div>
+    `;
+  }
+
+  async function loadPrayerWall(){
+    const list = document.getElementById('prayer-list');
+    try{
+      const all = await BCMData.getPrayerRequests();
+      list.innerHTML = all.length ? all.map(prayerCard).join('') : '<p class="muted">No requests posted yet — be the first.</p>';
+    }catch(e){
+      console.error(e);
+      list.innerHTML = '<p class="muted">Couldn\'t load the prayer wall right now.</p>';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadPrayerWall);
+
+  const anonBox = document.getElementById('pr-anonymous');
+  const nameField = document.getElementById('pr-name-field');
+  anonBox.addEventListener('change', () => {
+    nameField.style.display = anonBox.checked ? 'none' : 'flex';
+  });
+
+  document.getElementById('prayer-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById('pr-error');
+    const successEl = document.getElementById('pr-success');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+
+    if (!BCMData.isLive()){
+      errorEl.textContent = "Supabase isn't connected yet — see README.md.";
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    const isAnonymous = anonBox.checked;
+    const payload = {
+      request_text: document.getElementById('pr-text').value,
+      requester_name: isAnonymous ? null : (document.getElementById('pr-name').value || null),
+      is_anonymous: isAnonymous
+    };
+    try{
+      await BCMData.createPrayerRequest(payload);
+      e.target.reset();
+      nameField.style.display = 'flex';
+      successEl.style.display = 'block';
+      loadPrayerWall();
+    }catch(err){
+      errorEl.textContent = err.message || 'Something went wrong.';
+      errorEl.style.display = 'block';
+    }
+  });
+</script>
+</body>
+</html>

@@ -57,6 +57,9 @@
       <button class="btn btn--ghost tab-btn active" data-tab="announcements">Announcements</button>
       <button class="btn btn--ghost tab-btn" data-tab="team">Org Chart</button>
       <button class="btn btn--ghost tab-btn" data-tab="members">Member Requests</button>
+      <button class="btn btn--ghost tab-btn" data-tab="prayer">Prayer Wall</button>
+      <button class="btn btn--ghost tab-btn" data-tab="messages">Messages</button>
+      <button class="btn btn--ghost tab-btn" data-tab="gallery">Gallery</button>
     </div>
 
     <!-- ===================== ANNOUNCEMENTS TAB ===================== -->
@@ -78,9 +81,20 @@
               <input type="checkbox" id="a-pinned"> <span>Mark as Last-Minute (pinned to top + banner)</span>
             </label>
           </div>
-          <div class="field" style="max-width:280px;">
-            <label>Expires (optional — auto-unpins after this date)</label>
-            <input type="date" id="a-expires">
+          <div class="grid-2">
+            <div class="field">
+              <label>Location (optional)</label>
+              <input type="text" id="a-location" placeholder="e.g. Newman Hall, Great Room">
+            </div>
+            <div class="field">
+              <label>Expires (optional — auto-unpins after this date)</label>
+              <input type="date" id="a-expires">
+            </div>
+          </div>
+          <div class="field">
+            <label>Images (optional)</label>
+            <input type="file" id="a-images" accept="image/*" multiple>
+            <div id="a-image-preview" class="img-thumb-row"></div>
           </div>
           <div class="row">
             <button type="submit" class="btn">Save Announcement</button>
@@ -135,6 +149,44 @@
       <p class="muted" style="margin-top:4px;">Promote trusted officers to admin, or revoke access.</p>
       <div id="approved-list" class="panel stack" style="margin-top:12px;"></div>
     </div>
+
+    <!-- ===================== PRAYER WALL TAB ===================== -->
+    <div id="tab-prayer" style="display:none;">
+      <div class="eyebrow">PRAYER REQUESTS</div>
+      <p class="muted" style="margin-top:4px;">
+        Anyone can post to the public Prayer Wall, with or without their name. Remove anything
+        that shouldn't stay up.
+      </p>
+      <div id="prayer-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== MESSAGES TAB ===================== -->
+    <div id="tab-messages" style="display:none;">
+      <div class="eyebrow">CONTACT MESSAGES</div>
+      <p class="muted" style="margin-top:4px;">Messages sent through the Connect page contact form.</p>
+      <div id="messages-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== GALLERY TAB ===================== -->
+    <div id="tab-gallery" style="display:none;">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">ADD PHOTOS</div>
+        <form id="gallery-form" class="stack">
+          <div class="field">
+            <label>Photo(s)</label>
+            <input type="file" id="g-images" accept="image/*" multiple required>
+          </div>
+          <div class="field">
+            <label>Caption (optional — applied to all photos in this batch)</label>
+            <input type="text" id="g-caption" placeholder="e.g. Fall Retreat 2026">
+          </div>
+          <button type="submit" class="btn">Upload</button>
+        </form>
+      </div>
+
+      <div class="eyebrow">EXISTING PHOTOS</div>
+      <div id="gallery-admin-list" class="gallery-grid" style="margin-top:12px;"></div>
+    </div>
   </div>
 </section>
 
@@ -160,6 +212,9 @@
     loadAnnouncements();
     loadTeam();
     loadMembers();
+    loadPrayerRequests();
+    loadMessages();
+    loadGallery();
   });
 
   document.getElementById('logout-btn').addEventListener('click', async () => {
@@ -175,6 +230,9 @@
       document.getElementById('tab-announcements').style.display = btn.dataset.tab === 'announcements' ? 'block' : 'none';
       document.getElementById('tab-team').style.display = btn.dataset.tab === 'team' ? 'block' : 'none';
       document.getElementById('tab-members').style.display = btn.dataset.tab === 'members' ? 'block' : 'none';
+      document.getElementById('tab-prayer').style.display = btn.dataset.tab === 'prayer' ? 'block' : 'none';
+      document.getElementById('tab-messages').style.display = btn.dataset.tab === 'messages' ? 'block' : 'none';
+      document.getElementById('tab-gallery').style.display = btn.dataset.tab === 'gallery' ? 'block' : 'none';
     });
   });
 
@@ -190,6 +248,8 @@
             ${a.pinned ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent);">Last-Minute</span>' : ''}
             <h3 style="margin:6px 0 2px;">${bcmEscape(a.title)}</h3>
             <p class="muted" style="margin:0 0 4px; max-width:60ch;">${bcmEscape(bcmTruncate(a.body,160))}</p>
+            ${a.location ? `<p class="muted" style="margin:0 0 4px;">📍 ${bcmEscape(a.location)}</p>` : ''}
+            ${a.image_urls && a.image_urls.length ? `<p class="muted" style="margin:0 0 4px;">${a.image_urls.length} image${a.image_urls.length>1?'s':''} attached</p>` : ''}
             <span class="tag">${bcmFormatDate(a.created_at)}</span>
           </div>
           <div class="row" style="flex-shrink:0;">
@@ -203,18 +263,57 @@
     }
   }
 
+  // ---- announcement images: existing (kept) urls + newly-picked files ----
+  let aExistingImages = [];
+  let aNewFiles = [];
+
+  function renderImagePreview(){
+    const wrap = document.getElementById('a-image-preview');
+    const existingHtml = aExistingImages.map((url, i) => `
+      <div class="img-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="img-thumb-remove" data-kind="existing" data-idx="${i}">&times;</button>
+      </div>`).join('');
+    const newHtml = aNewFiles.map((f, i) => `
+      <div class="img-thumb">
+        <img src="${URL.createObjectURL(f)}" alt="">
+        <button type="button" class="img-thumb-remove" data-kind="new" data-idx="${i}">&times;</button>
+      </div>`).join('');
+    wrap.innerHTML = existingHtml + newHtml;
+    wrap.querySelectorAll('.img-thumb-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (btn.dataset.kind === 'existing') aExistingImages.splice(idx, 1);
+        else aNewFiles.splice(idx, 1);
+        renderImagePreview();
+      });
+    });
+  }
+  document.getElementById('a-images').addEventListener('change', (e) => {
+    aNewFiles = aNewFiles.concat(Array.from(e.target.files));
+    e.target.value = '';
+    renderImagePreview();
+  });
+
   function editAnnouncement(a){
     document.getElementById('a-id').value = a.id;
     document.getElementById('a-title').value = a.title;
     document.getElementById('a-body').value = a.body;
     document.getElementById('a-pinned').checked = !!a.pinned;
     document.getElementById('a-expires').value = a.expires_at ? a.expires_at.slice(0,10) : '';
+    document.getElementById('a-location').value = a.location || '';
+    aExistingImages = [...(a.image_urls || [])];
+    aNewFiles = [];
+    renderImagePreview();
     document.getElementById('a-cancel').style.display = 'inline-flex';
     window.scrollTo({top:0, behavior:'smooth'});
   }
   document.getElementById('a-cancel').addEventListener('click', () => {
     document.getElementById('announcement-form').reset();
     document.getElementById('a-id').value = '';
+    aExistingImages = [];
+    aNewFiles = [];
+    renderImagePreview();
     document.getElementById('a-cancel').style.display = 'none';
   });
 
@@ -227,20 +326,36 @@
   document.getElementById('announcement-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('a-id').value;
-    const payload = {
-      title: document.getElementById('a-title').value,
-      body: document.getElementById('a-body').value,
-      pinned: document.getElementById('a-pinned').checked,
-      expires_at: document.getElementById('a-expires').value || null
-    };
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = aNewFiles.length ? 'Uploading images…' : 'Saving…';
     try{
+      const uploadedUrls = [];
+      for (const file of aNewFiles){
+        uploadedUrls.push(await BCMData.uploadMedia(file, 'announcements'));
+      }
+      const payload = {
+        title: document.getElementById('a-title').value,
+        body: document.getElementById('a-body').value,
+        pinned: document.getElementById('a-pinned').checked,
+        expires_at: document.getElementById('a-expires').value || null,
+        location: document.getElementById('a-location').value || null,
+        image_urls: [...aExistingImages, ...uploadedUrls]
+      };
       if (id) await BCMData.updateAnnouncement(id, payload);
       else await BCMData.createAnnouncement(payload);
       e.target.reset();
       document.getElementById('a-id').value = '';
+      aExistingImages = [];
+      aNewFiles = [];
+      renderImagePreview();
       document.getElementById('a-cancel').style.display = 'none';
       loadAnnouncements();
     }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Announcement';
+    }
   });
 
   // ===================== TEAM =====================
@@ -364,6 +479,112 @@
   async function revokeAccess(id){
     if (!confirm('Revoke this person\'s directory access? Their profile will be removed.')) return;
     try{ await BCMData.removeMember(id); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== PRAYER WALL =====================
+  async function loadPrayerRequests(){
+    const list = document.getElementById('prayer-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getPrayerRequests();
+      list.innerHTML = all.length ? all.map(p => `
+        <div class="admin-row">
+          <div>
+            <p style="margin:0 0 4px; max-width:60ch; white-space:pre-line;">${bcmEscape(p.request_text)}</p>
+            <span class="tag">${p.is_anonymous || !p.requester_name ? 'Anonymous' : bcmEscape(p.requester_name)}</span>
+            <span class="tag">${bcmFormatDate(p.created_at)}</span>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--danger" onclick="removePrayerRequest('${p.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No prayer requests yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+  async function removePrayerRequest(id){
+    if (!confirm('Delete this prayer request?')) return;
+    try{ await BCMData.deletePrayerRequest(id); loadPrayerRequests(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== MESSAGES =====================
+  async function loadMessages(){
+    const list = document.getElementById('messages-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.listContactMessages();
+      list.innerHTML = all.length ? all.map(m => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(m.name)} ${!m.is_read ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent);">New</span>' : ''}</h3>
+            <p class="muted" style="margin:0 0 4px;">${bcmEscape(m.email)} · ${bcmFormatDate(m.created_at)}</p>
+            <p style="margin:0 0 4px; max-width:60ch; white-space:pre-line;">${bcmEscape(m.message)}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            ${!m.is_read ? `<button class="btn btn--small btn--ghost" onclick="markRead('${m.id}')">Mark Read</button>` : ''}
+            <button class="btn btn--small btn--danger" onclick="removeMessage('${m.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No messages yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+  async function markRead(id){
+    try{ await BCMData.markMessageRead(id, true); loadMessages(); }
+    catch(e){ alert(e.message); }
+  }
+  async function removeMessage(id){
+    if (!confirm('Delete this message?')) return;
+    try{ await BCMData.deleteContactMessage(id); loadMessages(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== GALLERY =====================
+  async function loadGallery(){
+    const list = document.getElementById('gallery-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getGalleryPhotos();
+      list.innerHTML = all.length ? all.map(p => `
+        <figure style="position:relative;">
+          <img src="${p.image_url}" alt="${bcmEscape(p.caption||'')}">
+          <button type="button" class="img-thumb-remove" style="top:6px; right:6px;" onclick="removeGalleryPhoto('${p.id}')">&times;</button>
+          ${p.caption ? `<figcaption class="muted">${bcmEscape(p.caption)}</figcaption>` : ''}
+        </figure>
+      `).join('') : '<p class="muted">No photos yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+  document.getElementById('gallery-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const filesInput = document.getElementById('g-images');
+    const caption = document.getElementById('g-caption').value || null;
+    const files = Array.from(filesInput.files);
+    if (!files.length) return;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading…';
+    try{
+      for (const file of files){
+        const url = await BCMData.uploadMedia(file, 'gallery');
+        await BCMData.createGalleryPhoto({ image_url: url, caption });
+      }
+      e.target.reset();
+      loadGallery();
+    }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload';
+    }
+  });
+  async function removeGalleryPhoto(id){
+    if (!confirm('Remove this photo from the gallery?')) return;
+    try{ await BCMData.deleteGalleryPhoto(id); loadGallery(); }
     catch(e){ alert(e.message); }
   }
 </script>

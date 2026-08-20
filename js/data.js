@@ -207,12 +207,101 @@ const BCMData = (() => {
     if (error) throw error;
   }
 
+  // ---- media uploads (announcement images, gallery photos) ----
+  // Uploads to the public 'bcm-media' storage bucket (see sql/schema.sql)
+  // under the given folder, e.g. 'announcements' or 'gallery', and
+  // returns the public URL to store on the row.
+  async function uploadMedia(file, folder = 'misc'){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await client.storage.from('bcm-media').upload(path, file, { upsert: false });
+    if (error) throw error;
+    const { data } = client.storage.from('bcm-media').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  // ---- prayer requests ----
+  async function getPrayerRequests(){
+    if (!client) return [...(window.BCM_SAMPLE_PRAYER_REQUESTS || [])];
+    const { data, error } = await client
+      .from('prayer_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) { console.error('getPrayerRequests', error); return []; }
+    return data;
+  }
+  async function createPrayerRequest(payload){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { data, error } = await client.from('prayer_requests').insert(payload).select();
+    if (error) throw error;
+    return data[0];
+  }
+  async function deletePrayerRequest(id){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { error } = await client.from('prayer_requests').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // ---- contact messages ----
+  async function submitContactMessage(payload){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { data, error } = await client.from('contact_messages').insert(payload).select();
+    if (error) throw error;
+    return data[0];
+  }
+  async function listContactMessages(){
+    if (!client) return [...(window.BCM_SAMPLE_CONTACT_MESSAGES || [])];
+    const { data, error } = await client
+      .from('contact_messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) { console.error('listContactMessages', error); return []; }
+    return data;
+  }
+  async function markMessageRead(id, isRead = true){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { error } = await client.from('contact_messages').update({ is_read: isRead }).eq('id', id);
+    if (error) throw error;
+  }
+  async function deleteContactMessage(id){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { error } = await client.from('contact_messages').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  // ---- gallery ----
+  async function getGalleryPhotos(){
+    if (!client) return [...(window.BCM_SAMPLE_GALLERY || [])];
+    const { data, error } = await client
+      .from('gallery_photos')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) { console.error('getGalleryPhotos', error); return []; }
+    return data;
+  }
+  async function createGalleryPhoto(payload){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { data, error } = await client.from('gallery_photos').insert(payload).select();
+    if (error) throw error;
+    return data[0];
+  }
+  async function deleteGalleryPhoto(id){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { error } = await client.from('gallery_photos').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   return {
     isLive, getAnnouncements, getTeam,
     createAnnouncement, updateAnnouncement, deleteAnnouncement,
     createTeamMember, updateTeamMember, deleteTeamMember,
     signUp, signIn, signOut, getSession,
     ensureMemberRow, getMyStatus, getMyProfile, upsertMyProfile, getDirectory,
-    listPendingRequests, listApprovedMembers, approveMember, denyMember, setAdmin, removeMember
+    listPendingRequests, listApprovedMembers, approveMember, denyMember, setAdmin, removeMember,
+    uploadMedia,
+    getPrayerRequests, createPrayerRequest, deletePrayerRequest,
+    submitContactMessage, listContactMessages, markMessageRead, deleteContactMessage,
+    getGalleryPhotos, createGalleryPhoto, deleteGalleryPhoto
   };
 })();
