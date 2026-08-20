@@ -93,7 +93,7 @@
 <script src="js/regular-events.js"></script>
 <script src="js/hero-slideshow.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', async () => {
+  async function bcmLoadHomeAnnouncements(){
     const el = document.getElementById('home-announcements');
     try{
       const all = await BCMData.getAnnouncements();
@@ -111,35 +111,53 @@
       console.error(e);
       el.innerHTML = '<p class="muted">Couldn\'t load announcements right now.</p>';
     }
+  }
 
+  function bcmLoadHomeThisWeek(){
     const thisWeekEl = document.getElementById('home-this-week');
     try{
-      let team = [];
-      try{ team = await BCMData.getTeam(); }catch(e){ /* leader lookup is best-effort */ }
-      const findLeader = (keyword) => keyword ? team.find(m => (m.role || '').toLowerCase().includes(keyword)) : null;
-
       const upcoming = bcmUpcomingRegularEvents(2);
-      thisWeekEl.innerHTML = upcoming.map((ev, i) => {
-        const leader = findLeader(ev.leaderKeyword);
-        const leaderLine = leader
-          ? `<p style="margin:6px 0 0; font-size:0.85rem;">Led by ${leader.email ? `<a href="mailto:${leader.email}">${bcmEscape(leader.name)}</a>` : bcmEscape(leader.name)}</p>`
-          : '';
-        return `
-          ${i > 0 ? '<hr class="hr">' : ''}
-          <div class="row" style="justify-content:space-between;">
-            <div>
-              <div class="tag">${ev.day} · ${ev.time}</div>
-              <h3 style="margin-top:8px;">${bcmEscape(ev.title)}</h3>
-              <p class="muted" style="margin:0;">${bcmEscape(ev.description)}</p>
-              ${leaderLine}
-            </div>
+
+      // Render the events immediately — they don't need the team
+      // roster to display. The "Led by ___" line is a nice-to-have
+      // that's added afterward if the lookup finishes quickly.
+      thisWeekEl.innerHTML = upcoming.map((ev, i) => `
+        ${i > 0 ? '<hr class="hr">' : ''}
+        <div class="row" style="justify-content:space-between;" data-leader-keyword="${ev.leaderKeyword || ''}">
+          <div>
+            <div class="tag">${ev.day} · ${ev.time}</div>
+            <h3 style="margin-top:8px;">${bcmEscape(ev.title)}</h3>
+            <p class="muted" style="margin:0;">${bcmEscape(ev.description)}</p>
+            <p class="leader-line" style="margin:6px 0 0; font-size:0.85rem;"></p>
           </div>
-        `;
-      }).join('');
+        </div>
+      `).join('');
+
+      // Best-effort leader lookup, capped at 3 seconds so a slow or
+      // stalled network request can never hold up the page.
+      const timeout = (ms) => new Promise(resolve => setTimeout(() => resolve([]), ms));
+      Promise.race([BCMData.getTeam(), timeout(3000)]).then(team => {
+        if (!team || !team.length) return;
+        thisWeekEl.querySelectorAll('[data-leader-keyword]').forEach(row => {
+          const keyword = row.dataset.leaderKeyword;
+          if (!keyword) return;
+          const leader = team.find(m => (m.role || '').toLowerCase().includes(keyword));
+          if (!leader) return;
+          const line = row.querySelector('.leader-line');
+          line.innerHTML = `Led by ${leader.email ? `<a href="mailto:${leader.email}">${bcmEscape(leader.name)}</a>` : bcmEscape(leader.name)}`;
+        });
+      }).catch(() => {});
     }catch(e){
       console.error(e);
       thisWeekEl.innerHTML = '<p class="muted" style="margin:0;">Check the full calendar for what\'s next.</p>';
     }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Independent, run in parallel — a slow announcements fetch
+    // should never delay the events panel, or vice versa.
+    bcmLoadHomeAnnouncements();
+    bcmLoadHomeThisWeek();
   });
 </script>
 </body>
