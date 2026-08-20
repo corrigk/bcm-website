@@ -29,11 +29,26 @@
     <div id="pinned-wrap" style="margin-bottom: 36px;"></div>
 
     <div class="eyebrow">ALL ANNOUNCEMENTS</div>
-    <div id="announcements-list" class="stack" style="margin-top:14px;">
+    <div id="announcements-list" style="margin-top:14px;">
       <p class="muted">Loading…</p>
     </div>
   </div>
 </section>
+
+<style>
+  .ann-group{ margin-bottom: 22px; }
+  .ann-group summary{
+    cursor:pointer; list-style:none; user-select:none;
+    font-family: var(--f-mono); font-size:0.78rem; letter-spacing:0.08em;
+    text-transform:uppercase; color: var(--blueprint);
+    padding: 12px 14px; border: 1px solid var(--paper-line); background: var(--parchment);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .ann-group summary::-webkit-details-marker{ display:none; }
+  .ann-group summary::after{ content:"+"; font-size:1rem; }
+  .ann-group[open] summary::after{ content:"−"; }
+  .ann-group .ann-group-body{ padding-top:14px; display:flex; flex-direction:column; gap:14px; }
+</style>
 
 <footer id="site-footer"></footer>
 
@@ -52,7 +67,7 @@
       <div class="panel${pinnedStyle ? '' : ''}" style="${pinnedStyle ? 'border-color:var(--urgent);' : ''}">
         <div class="row" style="justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
           ${a.pinned ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent);">Last-Minute</span>' : '<span></span>'}
-          <span class="tag">${bcmFormatDate(a.created_at)}</span>
+          <span class="tag">${bcmFormatDateTime(a.created_at)}</span>
         </div>
         <h3>${bcmEscape(a.title)}</h3>
         ${location}
@@ -60,6 +75,26 @@
         ${images}
       </div>
     `;
+  }
+
+  // Buckets announcements older than 7 days by calendar month, e.g.
+  // "August 2026" — most recent month first. Everything within the
+  // last 7 days is returned separately as "recent" and shown open.
+  function groupOlderAnnouncements(items){
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 86400000);
+    const recent = items.filter(a => new Date(a.created_at) >= weekAgo);
+    const older = items.filter(a => new Date(a.created_at) < weekAgo);
+
+    const order = [];
+    const groups = {};
+    older.forEach(a => {
+      const d = new Date(a.created_at);
+      const key = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      if (!groups[key]){ groups[key] = []; order.push(key); }
+      groups[key].push(a);
+    });
+    return { recent, order, groups };
   }
 
   document.addEventListener('DOMContentLoaded', async () => {
@@ -77,9 +112,26 @@
         ? `<div class="eyebrow">LAST-MINUTE</div>` + pinned.map(a => announcementCard(a, true)).join('')
         : '';
 
-      list.innerHTML = rest.length
-        ? rest.map(a => announcementCard(a, false)).join('')
-        : '<p class="muted">Nothing here yet.</p>';
+      if (!rest.length){
+        list.innerHTML = '<p class="muted">Nothing here yet.</p>';
+        return;
+      }
+
+      const { recent, order, groups } = groupOlderAnnouncements(rest);
+
+      let html = '';
+      html += recent.length
+        ? `<div class="stack" style="margin-bottom: ${order.length ? '28px' : '0'};">${recent.map(a => announcementCard(a, false)).join('')}</div>`
+        : '';
+      order.forEach(key => {
+        html += `
+          <details class="ann-group">
+            <summary>${key} (${groups[key].length})</summary>
+            <div class="ann-group-body">${groups[key].map(a => announcementCard(a, false)).join('')}</div>
+          </details>
+        `;
+      });
+      list.innerHTML = html || '<p class="muted">Nothing here yet.</p>';
     }catch(e){
       console.error(e);
       list.innerHTML = '<p class="muted">Couldn\'t load announcements right now.</p>';

@@ -41,9 +41,10 @@ const BCM_SAMPLE_MEMBER_REQUESTS = [
 ];
 
 const BCM_SAMPLE_PRAYER_REQUESTS = [
-  { id: "pr1", request_text: "Please pray for my grandmother's surgery next week — for the doctors' hands and her recovery.", requester_name: "Tyler N.", is_anonymous: false, created_at: new Date(Date.now() - 1000*60*60*10).toISOString() },
-  { id: "pr2", request_text: "Pray for peace and discernment as I decide on a summer internship.", requester_name: null, is_anonymous: true, created_at: new Date(Date.now() - 1000*60*60*30).toISOString() },
-  { id: "pr3", request_text: "For my family back home — a hard season for us right now.", requester_name: "Marcus D.", is_anonymous: false, created_at: new Date(Date.now() - 1000*60*60*72).toISOString() }
+  { id: "pr1", request_text: "Please pray for my grandmother's surgery next week — for the doctors' hands and her recovery.", requester_name: "Tyler N.", is_anonymous: false, approved: true, created_at: new Date(Date.now() - 1000*60*60*10).toISOString() },
+  { id: "pr2", request_text: "Pray for peace and discernment as I decide on a summer internship.", requester_name: null, is_anonymous: true, approved: true, created_at: new Date(Date.now() - 1000*60*60*30).toISOString() },
+  { id: "pr3", request_text: "For my family back home — a hard season for us right now.", requester_name: "Marcus D.", is_anonymous: false, approved: true, created_at: new Date(Date.now() - 1000*60*60*72).toISOString() },
+  { id: "pr4", request_text: "A friend from my hometown asked me to pray for her — she's going through a rough breakup.", requester_name: "Someone from outside BCM", is_anonymous: false, approved: false, created_at: new Date(Date.now() - 1000*60*60*2).toISOString() }
 ];
 
 const BCM_SAMPLE_CONTACT_MESSAGES = [

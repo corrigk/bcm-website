@@ -35,6 +35,11 @@ create table if not exists prayer_requests (
 );
 alter table prayer_requests enable row level security;
 
+-- Whether a request is visible on the public wall yet. Logged-in,
+-- approved members auto-publish; everyone else's posts land here as
+-- false and wait for an admin to approve them in the dashboard.
+alter table prayer_requests add column if not exists approved boolean not null default false;
+
 -- ---------- CONTACT MESSAGES ----------
 create table if not exists contact_messages (
   id uuid primary key default gen_random_uuid(),
@@ -187,16 +192,29 @@ create policy "Admins can delete team members" on team_members
 
 -- ===========================================================
 -- POLICIES — prayer_requests
--- (anyone, including anonymous visitors, can post and read; only
--- admins can remove a request, for moderation)
+-- (anyone can read approved posts, and anyone can submit — but a
+-- submission only auto-publishes if it's genuinely coming from a
+-- logged-in, approved member; everyone else's posts land as
+-- unapproved and wait in the admin queue. Admins can see and approve
+-- the pending ones, and remove any post for moderation.)
 -- ===========================================================
 drop policy if exists "Public can read prayer requests" on prayer_requests;
-create policy "Public can read prayer requests" on prayer_requests
-  for select using (true);
+create policy "Public can read approved prayer requests" on prayer_requests
+  for select using (approved = true);
+
+drop policy if exists "Admins can read all prayer requests" on prayer_requests;
+create policy "Admins can read all prayer requests" on prayer_requests
+  for select to authenticated using (is_admin());
 
 drop policy if exists "Public can submit prayer requests" on prayer_requests;
 create policy "Public can submit prayer requests" on prayer_requests
-  for insert with check (true);
+  for insert with check (
+    approved = false or (auth.uid() is not null and is_approved())
+  );
+
+drop policy if exists "Admins can update prayer requests" on prayer_requests;
+create policy "Admins can update prayer requests" on prayer_requests
+  for update to authenticated using (is_admin());
 
 drop policy if exists "Admins can delete prayer requests" on prayer_requests;
 create policy "Admins can delete prayer requests" on prayer_requests

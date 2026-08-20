@@ -158,6 +158,14 @@
         Anyone can post to the public Prayer Wall, with or without their name. Remove anything
         that shouldn't stay up.
       </p>
+      <div class="eyebrow">PENDING APPROVAL</div>
+      <p class="muted" style="margin-top:4px; font-size:0.85rem;">
+        From logged-out visitors or people not yet approved in the directory — approve to post
+        to the public wall, or delete to discard.
+      </p>
+      <div id="prayer-pending-list" class="panel stack" style="margin-top:12px;"></div>
+
+      <div class="eyebrow" style="margin-top:28px;">ON THE WALL</div>
       <div id="prayer-admin-list" class="panel stack" style="margin-top:12px;"></div>
     </div>
 
@@ -531,11 +539,16 @@
 
   // ===================== PRAYER WALL =====================
   async function loadPrayerRequests(){
-    const list = document.getElementById('prayer-admin-list');
-    list.innerHTML = '<p class="muted">Loading…</p>';
+    const pendingList = document.getElementById('prayer-pending-list');
+    const approvedList = document.getElementById('prayer-admin-list');
+    pendingList.innerHTML = '<p class="muted">Loading…</p>';
+    approvedList.innerHTML = '<p class="muted">Loading…</p>';
     try{
-      const all = await BCMData.getPrayerRequests();
-      list.innerHTML = all.length ? all.map(p => `
+      const all = await BCMData.getAllPrayerRequests();
+      const pending = all.filter(p => !p.approved);
+      const approved = all.filter(p => p.approved);
+
+      const row = (p, isPending) => `
         <div class="admin-row">
           <div>
             <p style="margin:0 0 4px; max-width:60ch; white-space:pre-line;">${bcmEscape(p.request_text)}</p>
@@ -543,13 +556,22 @@
             <span class="tag">${bcmFormatDate(p.created_at)}</span>
           </div>
           <div class="row" style="flex-shrink:0;">
+            ${isPending ? `<button class="btn btn--small" onclick="approvePrayerRequest('${p.id}')">Approve</button>` : ''}
             <button class="btn btn--small btn--danger" onclick="removePrayerRequest('${p.id}')">Delete</button>
           </div>
         </div>
-      `).join('') : '<p class="muted">No prayer requests yet.</p>';
+      `;
+
+      pendingList.innerHTML = pending.length ? pending.map(p => row(p, true)).join('') : '<p class="muted">Nothing waiting on approval.</p>';
+      approvedList.innerHTML = approved.length ? approved.map(p => row(p, false)).join('') : '<p class="muted">No prayer requests posted yet.</p>';
     }catch(e){
-      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+      pendingList.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+      approvedList.innerHTML = '';
     }
+  }
+  async function approvePrayerRequest(id){
+    try{ await BCMData.approvePrayerRequest(id); loadPrayerRequests(); }
+    catch(e){ alert(e.message); }
   }
   async function removePrayerRequest(id){
     if (!confirm('Delete this prayer request?')) return;

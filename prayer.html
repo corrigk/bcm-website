@@ -44,9 +44,13 @@
               <input type="text" id="pr-name" placeholder="Shown next to your request">
             </div>
             <button type="submit" class="btn">Submit Request</button>
-            <p id="pr-success" class="muted" style="display:none;">Thank you — your request has been posted.</p>
+            <p id="pr-success" class="muted" style="display:none;"></p>
             <p id="pr-error" class="muted" style="color:#B23A24; display:none;"></p>
           </form>
+          <p id="pr-member-nudge" class="muted" style="margin-top:14px; padding-top:14px; border-top:1px solid var(--paper-line); font-size:0.85rem; display:none;">
+            Directory members' posts go up instantly — everyone else's are reviewed first.
+            <a href="directory/login.html">Log in</a> or <a href="directory/signup.html">join the directory</a>.
+          </p>
         </div>
       </div>
 
@@ -93,7 +97,21 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', loadPrayerWall);
+  document.addEventListener('DOMContentLoaded', async () => {
+    loadPrayerWall();
+    // Show the "join the directory" nudge unless the visitor is
+    // already logged in as an approved member (they'd auto-publish
+    // anyway, so the nudge wouldn't apply to them).
+    try{
+      const session = await BCMData.getSession();
+      let isApprovedMember = false;
+      if (session){
+        const status = await BCMData.getMyStatus(session.user.id);
+        isApprovedMember = !!(status && status.approved);
+      }
+      if (!isApprovedMember) document.getElementById('pr-member-nudge').style.display = 'block';
+    }catch(e){ /* nudge is cosmetic, fine to skip on error */ }
+  });
 
   const anonBox = document.getElementById('pr-anonymous');
   const nameField = document.getElementById('pr-name-field');
@@ -121,9 +139,12 @@
       is_anonymous: isAnonymous
     };
     try{
-      await BCMData.createPrayerRequest(payload);
+      const created = await BCMData.createPrayerRequest(payload);
       e.target.reset();
       nameField.style.display = 'flex';
+      successEl.textContent = created && created.approved
+        ? 'Thank you — your request has been posted.'
+        : "Thank you — your request is waiting on a quick admin approval, then it'll appear on the wall.";
       successEl.style.display = 'block';
       loadPrayerWall();
     }catch(err){

@@ -222,20 +222,49 @@ const BCMData = (() => {
   }
 
   // ---- prayer requests ----
+  // Admin dashboard needs to see everything (pending + approved);
+  // the public wall only ever wants approved posts. Two functions so
+  // each page only asks for what its RLS policy actually allows.
   async function getPrayerRequests(){
+    if (!client) return (window.BCM_SAMPLE_PRAYER_REQUESTS || []).filter(p => p.approved !== false);
+    const { data, error } = await client
+      .from('prayer_requests')
+      .select('*')
+      .eq('approved', true)
+      .order('created_at', { ascending: false });
+    if (error) { console.error('getPrayerRequests', error); return []; }
+    return data;
+  }
+  async function getAllPrayerRequests(){
     if (!client) return [...(window.BCM_SAMPLE_PRAYER_REQUESTS || [])];
     const { data, error } = await client
       .from('prayer_requests')
       .select('*')
       .order('created_at', { ascending: false });
-    if (error) { console.error('getPrayerRequests', error); return []; }
+    if (error) { console.error('getAllPrayerRequests', error); return []; }
     return data;
   }
+  // Auto-approves if the person is currently logged in as an approved
+  // member; otherwise lands as pending for an admin to approve. The
+  // server-side RLS policy enforces this too, so a spoofed client
+  // can't force approved=true — this is just picking the right value
+  // to try.
   async function createPrayerRequest(payload){
     if (!client) throw new Error('Connect Supabase first (see README).');
-    const { data, error } = await client.from('prayer_requests').insert(payload).select();
+    let approved = false;
+    const session = await getSession();
+    if (session){
+      const status = await getMyStatus(session.user.id);
+      approved = !!(status && status.approved);
+    }
+    const { data, error } = await client.from('prayer_requests').insert({ ...payload, approved }).select();
     if (error) throw error;
     return data[0];
+  }
+  async function approvePrayerRequest(id){
+    if (!client) throw new Error('Connect Supabase first (see README).');
+    const { error } = await client.from('prayer_requests').update({ approved: true }).eq('id', id);
+    if (error) throw error;
   }
   async function deletePrayerRequest(id){
     if (!client) throw new Error('Connect Supabase first (see README).');
@@ -327,7 +356,7 @@ const BCMData = (() => {
     ensureMemberRow, getMyStatus, getMyProfile, upsertMyProfile, getDirectory,
     listPendingRequests, listApprovedMembers, approveMember, denyMember, setAdmin, removeMember,
     uploadMedia,
-    getPrayerRequests, createPrayerRequest, deletePrayerRequest,
+    getPrayerRequests, getAllPrayerRequests, createPrayerRequest, approvePrayerRequest, deletePrayerRequest,
     submitContactMessage, listContactMessages, markMessageRead, deleteContactMessage,
     getGalleryPhotos, createGalleryPhoto, deleteGalleryPhoto,
     getReflections, createReflection, updateReflection, deleteReflection

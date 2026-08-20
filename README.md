@@ -188,7 +188,7 @@ STANDING_MEETING: {
   weekday: 4,          // 0 = Sunday ... 4 = Thursday, 6 = Saturday
   time: "8:00 PM",
   label: "Regular Meeting",
-  location: "Newman Hall"
+  location: "Loeb Playhouse"
 }
 ```
 
@@ -256,9 +256,11 @@ Once Supabase is connected and an officer has a login:
   access, promote an approved member to admin, or revoke access. Anyone
   can request access at `/directory/signup.html`; nothing they submit
   is visible to other members until an admin approves them.
-- **Prayer Wall tab:** moderate the public Prayer Wall (`/prayer.html`)
-  — anyone can post a request there, with their name or anonymously;
-  admins can remove anything that shouldn't stay up.
+- **Prayer Wall tab:** anyone can post to `/prayer.html`, with their
+  name or anonymously. Posts from logged-in, approved directory
+  members go up instantly; everyone else's land in a **Pending
+  Approval** queue on this tab for an admin to approve first. Delete
+  removes a post from either list.
 - **Messages tab:** read messages sent through the Connect page's
   contact form, mark them read, or delete them. There's no outgoing
   email yet — check this tab (or the dashboard generally) periodically.

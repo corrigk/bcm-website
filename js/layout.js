@@ -153,6 +153,12 @@ function bcmFormatDate(iso){
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
+function bcmFormatDateTime(iso){
+  const d = new Date(iso);
+  const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return `${date}, ${time}`;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   bcmRenderHeader();
