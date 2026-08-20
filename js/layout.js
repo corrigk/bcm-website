@@ -8,15 +8,9 @@ const BCM_NAV = [
   { href: "index.html", label: "Home" },
   { href: "calendar.html", label: "Calendar" },
   { href: "announcements.html", label: "Announcements" },
-<<<<<<< HEAD
   { href: "prayer.html", label: "Prayer" },
   { href: "gallery.html", label: "Gallery" },
   { href: "team.html", label: "Team" },
-=======
-  { href: "prayer.html", label: "Prayer Wall" },
-  { href: "gallery.html", label: "Gallery" },
-  { href: "team.html", label: "Who to Contact" },
->>>>>>> b57ede64ad1030d21b326237099f46b0489eb2f9
   { href: "directory/login.html", label: "Directory" },
   { href: "connect.html", label: "Connect" }
 ];
