@@ -102,10 +102,45 @@ see the next section. To become the very first admin:
 
 By default, Supabase makes new users click a confirmation link in their
 email before they can log in. For a small trusted ministry this is
-often unnecessary friction. To turn it off: **Authentication → Sign In
-/ Providers → Email**, toggle off **"Confirm email."** If you leave it
-on, that's fine too — the signup page tells people to check their email
-and log in afterward.
+often unnecessary friction — especially now that there's a separate
+approval email (below) telling people when they're actually in. To
+turn it off: **Authentication → Sign In / Providers → Email**, toggle
+off **"Confirm email."** If you leave it on, that's fine too — the
+signup page tells people to check their email and log in afterward.
+
+### Setting up the approval email (optional)
+
+When an admin approves someone in the Member Requests tab, the site
+can automatically email them to let them know — using **EmailJS**
+(free, no server needed, same idea as the Google Calendar API key).
+Skip this and approval still works fine, there's just no email sent.
+
+1. Go to [emailjs.com](https://www.emailjs.com) and sign up (free).
+2. **Email Services** → **Add New Service** → connect your Gmail (or
+   whichever inbox you want approval emails to come from).
+3. **Email Templates** → **Create New Template**. Set the "To Email"
+   field to `{{to_email}}`. In the body, use `{{to_name}}` and
+   `{{approver_name}}` wherever you want those to appear — for
+   example:
+
+   > Subject: You're approved for the BCM Directory!
+   >
+   > Hey {{to_name}},
+   >
+   > {{approver_name}} just approved your request — you're in! Head
+   > back to the site and log in to browse the directory and fill out
+   > your profile.
+   >
+   > — Boiler Catholic Men
+
+4. Save the template, then copy three values into `js/config.js`:
+   - **Account → General → Public Key** → `EMAILJS_PUBLIC_KEY`
+   - The Service ID from step 2 → `EMAILJS_SERVICE_ID`
+   - The Template ID from step 3 → `EMAILJS_APPROVAL_TEMPLATE_ID`
+
+That's it — the Approve button in the admin dashboard already knows
+to use these once they're filled in. The free EmailJS plan covers 200
+emails/month, which is a lot of approvals for a student org.
 
 ---
 
@@ -255,7 +290,10 @@ Once Supabase is connected and an officer has a login:
 - **Member Requests tab:** approve/deny people requesting directory
   access, promote an approved member to admin, or revoke access. Anyone
   can request access at `/directory/signup.html`; nothing they submit
-  is visible to other members until an admin approves them.
+  is visible to other members until an admin approves them. Approving
+  someone sends them an automatic email if you've set up EmailJS (see
+  "Setting up the approval email" above) — if not, approval still
+  works, it's just silent.
 - **Prayer Wall tab:** anyone can post to `/prayer.html`, with their
   name or anonymously. Posts from logged-in, approved directory
   members go up instantly; everyone else's land in a **Pending

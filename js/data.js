@@ -191,6 +191,26 @@ const BCMData = (() => {
     const { error } = await client.from('member_status').update({ approved: true }).eq('id', id);
     if (error) throw error;
   }
+  function emailjsConfigured(){
+    return !!(BCM_CONFIG.EMAILJS_PUBLIC_KEY && BCM_CONFIG.EMAILJS_SERVICE_ID && BCM_CONFIG.EMAILJS_APPROVAL_TEMPLATE_ID && window.emailjs);
+  }
+  // Best-effort — approval itself already succeeded by the time this
+  // is called, so a failure here (EmailJS not set up, network hiccup)
+  // should never be treated as the approval having failed.
+  async function sendApprovalEmail(toEmail, toName, approverName){
+    if (!emailjsConfigured()) return false;
+    try{
+      await window.emailjs.send(BCM_CONFIG.EMAILJS_SERVICE_ID, BCM_CONFIG.EMAILJS_APPROVAL_TEMPLATE_ID, {
+        to_email: toEmail,
+        to_name: toName || toEmail,
+        approver_name: approverName || 'a BCM leader'
+      }, { publicKey: BCM_CONFIG.EMAILJS_PUBLIC_KEY });
+      return true;
+    }catch(e){
+      console.error('sendApprovalEmail', e);
+      return false;
+    }
+  }
   async function denyMember(id){
     if (!client) throw new Error('Connect Supabase first (see README).');
     const { error } = await client.from('member_status').delete().eq('id', id);
@@ -355,6 +375,7 @@ const BCMData = (() => {
     signUp, signIn, signOut, getSession,
     ensureMemberRow, getMyStatus, getMyProfile, upsertMyProfile, getDirectory,
     listPendingRequests, listApprovedMembers, approveMember, denyMember, setAdmin, removeMember,
+    emailjsConfigured, sendApprovalEmail,
     uploadMedia,
     getPrayerRequests, getAllPrayerRequests, createPrayerRequest, approvePrayerRequest, deletePrayerRequest,
     submitContactMessage, listContactMessages, markMessageRead, deleteContactMessage,

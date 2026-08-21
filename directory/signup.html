@@ -17,8 +17,8 @@
     <div class="eyebrow" style="color:var(--gold-bright);">MEMBERS ONLY</div>
     <h1 style="color:#fff; font-size:1.8rem;">Join the Directory</h1>
     <p style="color:var(--gold); margin-bottom:20px;">
-      For current BCM members and alumni. An admin approves every request
-      before it's visible — this isn't public.
+      For current BCM members and alumni. A current leader reviews and approves
+      every request — you'll get an email once that happens.
     </p>
 
     <div class="panel--dark panel">
@@ -40,8 +40,15 @@
         </label>
         <button type="submit" class="btn" style="width:100%; justify-content:center;">Request Access</button>
         <p id="signup-error" class="muted" style="color:#e2a08a; display:none; margin:0;"></p>
-        <p id="signup-success" class="muted" style="color:var(--gold); display:none; margin:0;"></p>
       </form>
+      <div id="signup-success" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--line);">
+        <p style="color:var(--gold-bright); font-weight:600; margin:0 0 8px;">One more step — check your email.</p>
+        <ol style="color:var(--gold); margin:0; padding-left:18px; line-height:1.7; font-size:0.92rem;">
+          <li>You'll get an email from <strong>Supabase</strong> with a confirmation link — check your <strong>junk/spam folder</strong> if you don't see it in a minute or two.</li>
+          <li>Click the link in that email.</li>
+          <li>Come back to this site and <a href="login.html" style="color:var(--gold-bright);">log in here</a> with the email and password you just created.</li>
+        </ol>
+      </div>
     </div>
 
     <p class="muted" style="margin-top:16px;">
@@ -79,9 +86,8 @@
         await BCMData.ensureMemberRow(session);
         location.href = 'pending.html';
       } else {
-        successEl.textContent = 'Check your email to confirm your account, then log in below.';
+        e.target.style.display = 'none';
         successEl.style.display = 'block';
-        e.target.reset();
       }
     }catch(err){
       errorEl.textContent = err.message || 'Something went wrong.';

@@ -33,6 +33,15 @@ const BCM_CONFIG = {
     location: "Loeb Playhouse"
   },
 
+  // Optional — only needed for the automatic "you're approved!" email
+  // sent when an admin approves a directory request. Leave blank to
+  // skip it; approval still works fine without it, there just won't
+  // be an email. See README.md "Setting up the approval email" for
+  // how to get these three values from emailjs.com (free).
+  EMAILJS_PUBLIC_KEY: "",
+  EMAILJS_SERVICE_ID: "",
+  EMAILJS_APPROVAL_TEMPLATE_ID: "",
+
   // Home page hero slideshow. Add image files to the images/hero/
   // folder, then list their filenames here in the order you want them
   // to appear. One photo just displays statically; two or more will

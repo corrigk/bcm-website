@@ -247,6 +247,7 @@
 <script src="../js/config.js"></script>
 <script src="../js/sample-data.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/layout.js"></script>
 <script src="../js/calendar-events.js"></script>
@@ -261,6 +262,8 @@
       const status = await BCMData.getMyStatus(session.user.id);
       if (!status || !status.is_admin){ location.href = 'login.html'; return; }
       document.getElementById('whoami').textContent = session.user.email;
+      const profile = await BCMData.getMyProfile(session.user.id).catch(() => null);
+      window._bcmAdminName = (profile && profile.name) || session.user.email;
     }
     loadAnnouncements();
     loadTeam();
@@ -486,6 +489,7 @@
     approvedEl.innerHTML = '<p class="muted">Loading…</p>';
     try{
       const pending = await BCMData.listPendingRequests();
+      window._bcmPendingCache = pending;
       pendingEl.innerHTML = pending.length ? pending.map(p => `
         <div class="admin-row">
           <div>
@@ -518,7 +522,13 @@
   }
 
   async function approveRequest(id){
-    try{ await BCMData.approveMember(id); loadMembers(); }
+    const person = (window._bcmPendingCache || []).find(p => p.id === id);
+    try{
+      await BCMData.approveMember(id);
+      loadMembers();
+      // Best-effort — approval already succeeded either way.
+      if (person) BCMData.sendApprovalEmail(person.email, person.name, window._bcmAdminName);
+    }
     catch(e){ alert(e.message); }
   }
   async function denyRequest(id){
