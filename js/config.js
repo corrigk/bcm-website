@@ -38,9 +38,9 @@ const BCM_CONFIG = {
   // skip it; approval still works fine without it, there just won't
   // be an email. See README.md "Setting up the approval email" for
   // how to get these three values from emailjs.com (free).
-  EMAILJS_PUBLIC_KEY: "",
-  EMAILJS_SERVICE_ID: "",
-  EMAILJS_APPROVAL_TEMPLATE_ID: "",
+  EMAILJS_PUBLIC_KEY: "eXvCdK49OUKEeDUmx",
+  EMAILJS_SERVICE_ID: "service_a2vjw7i",
+  EMAILJS_APPROVAL_TEMPLATE_ID: "template_orvqyyp",
 
   // Home page hero slideshow. Add image files to the images/hero/
   // folder, then list their filenames here in the order you want them
