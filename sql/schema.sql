@@ -86,6 +86,9 @@ create table if not exists team_members (
 );
 alter table team_members enable row level security;
 
+-- Optional headshot for the org chart circle. Safe to re-run.
+alter table team_members add column if not exists photo_url text;
+
 -- ---------- MEMBER STATUS (access + approval + admin flag) ----------
 -- One row per signed-up user. Created automatically the first time
 -- someone logs in after signing up (see js/data.js -> ensureMemberRow).
@@ -199,6 +202,7 @@ create policy "Admins can delete team members" on team_members
 -- the pending ones, and remove any post for moderation.)
 -- ===========================================================
 drop policy if exists "Public can read prayer requests" on prayer_requests;
+drop policy if exists "Public can read approved prayer requests" on prayer_requests;
 create policy "Public can read approved prayer requests" on prayer_requests
   for select using (approved = true);
 

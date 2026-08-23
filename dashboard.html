@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard — Boiler Catholic Men</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .tab-btn{ }
+  .tab-btn.active{ background: var(--gold-bright); color: var(--black); border-color: var(--gold-bright); }
+  .admin-row{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+    border-bottom:1px solid var(--paper-line); padding: 14px 0;
+  }
+  .admin-row:last-child{ border-bottom:none; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{ font-family:var(--f-mono); font-size:0.7rem; letter-spacing:.08em; text-transform:uppercase; color: var(--blueprint); }
+  .field input, .field textarea, .field select{
+    padding:10px; font-family: var(--f-body); border:1px solid var(--paper-line); background:#fff;
+  }
+  .field textarea{ min-height:100px; resize:vertical; }
+</style>
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../icons/favicon-16x16.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+</head>
+<body>
+
+<header id="site-header"></header>
+
+<section class="section--tight" style="background:var(--black); color:var(--parchment);">
+  <div class="container row" style="justify-content:space-between;">
+    <div>
+      <div class="eyebrow" style="color:var(--gold-bright);">ADMIN</div>
+      <h1 style="color:#fff; font-size:1.8rem; margin:0;">Dashboard</h1>
+    </div>
+    <div class="row">
+      <span id="whoami" class="muted" style="color:var(--gold);"></span>
+      <button id="logout-btn" class="btn btn--on-dark btn--small">Log Out</button>
+    </div>
+  </div>
+</section>
+
+<section id="not-configured-warning" class="section--tight" style="display:none; background: var(--urgent-bg); border-bottom:1px solid var(--urgent);">
+  <div class="container">
+    <p style="margin:0; color:var(--urgent);">
+      Supabase isn't connected yet, so nothing here can save. Fill in <code>js/config.js</code> and
+      follow the README's Supabase setup steps first.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="row" style="margin-bottom: 24px;">
+      <button class="btn btn--ghost tab-btn active" data-tab="announcements">Announcements</button>
+      <button class="btn btn--ghost tab-btn" data-tab="team">Org Chart</button>
+      <button class="btn btn--ghost tab-btn" data-tab="members">Member Requests</button>
+      <button class="btn btn--ghost tab-btn" data-tab="prayer">Prayer Wall</button>
+      <button class="btn btn--ghost tab-btn" data-tab="messages">Messages</button>
+      <button class="btn btn--ghost tab-btn" data-tab="gallery">Gallery</button>
+      <button class="btn btn--ghost tab-btn" data-tab="reflections">Reflections</button>
+    </div>
+
+    <!-- ===================== ANNOUNCEMENTS TAB ===================== -->
+    <div id="tab-announcements">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">NEW ANNOUNCEMENT</div>
+        <form id="announcement-form" class="stack">
+          <input type="hidden" id="a-id">
+          <div class="field">
+            <label>Title</label>
+            <input type="text" id="a-title" required>
+          </div>
+          <div class="field">
+            <label>Body</label>
+            <textarea id="a-body" required></textarea>
+          </div>
+          <div class="row">
+            <label class="row" style="gap:8px;">
+              <input type="checkbox" id="a-pinned"> <span>Mark as Last-Minute (pinned to top + banner)</span>
+            </label>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Location (optional)</label>
+              <input type="text" id="a-location" placeholder="e.g. Newman Hall, Great Room">
+            </div>
+            <div class="field">
+              <label>Expires (optional — auto-unpins after this date)</label>
+              <input type="date" id="a-expires">
+            </div>
+          </div>
+          <div class="field">
+            <label>Images (optional)</label>
+            <input type="file" id="a-images" accept="image/*" multiple>
+            <div id="a-image-preview" class="img-thumb-row"></div>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn">Save Announcement</button>
+            <button type="button" id="a-cancel" class="btn btn--ghost" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="eyebrow">EXISTING</div>
+      <div id="announcements-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== TEAM TAB ===================== -->
+    <div id="tab-team" style="display:none;">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">NEW / EDIT TEAM MEMBER</div>
+        <form id="team-form" class="stack">
+          <input type="hidden" id="t-id">
+          <div class="grid-2">
+            <div class="field"><label>Name</label><input type="text" id="t-name" required></div>
+            <div class="field"><label>Role</label><input type="text" id="t-role" required placeholder="e.g. VP of Events"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label>Category</label>
+              <input type="text" id="t-category" required placeholder="e.g. Leadership, Ministry Teams">
+            </div>
+            <div class="field"><label>Email</label><input type="email" id="t-email"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field" style="max-width:160px;">
+              <label>Order (lower = first)</label>
+              <input type="number" id="t-order" value="10">
+            </div>
+            <div class="field">
+              <label>Photo (optional — square works best)</label>
+              <input type="file" id="t-photo" accept="image/*">
+              <div id="t-photo-preview" class="img-thumb-row"></div>
+            </div>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn">Save Team Member</button>
+            <button type="button" id="t-cancel" class="btn btn--ghost" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="eyebrow">EXISTING</div>
+      <div id="team-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== MEMBER REQUESTS TAB ===================== -->
+    <div id="tab-members" style="display:none;">
+      <div class="eyebrow">PENDING REQUESTS</div>
+      <p class="muted" style="margin-top:4px;">Approve access for current members and alumni requesting the directory.</p>
+      <div id="pending-list" class="panel stack" style="margin-top:12px; margin-bottom:32px;"></div>
+
+      <div class="eyebrow">APPROVED MEMBERS</div>
+      <p class="muted" style="margin-top:4px;">Promote trusted officers to admin, or revoke access.</p>
+      <div id="approved-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== PRAYER WALL TAB ===================== -->
+    <div id="tab-prayer" style="display:none;">
+      <div class="eyebrow">PRAYER REQUESTS</div>
+      <p class="muted" style="margin-top:4px;">
+        Anyone can post to the public Prayer Wall, with or without their name. Remove anything
+        that shouldn't stay up.
+      </p>
+      <div class="eyebrow">PENDING APPROVAL</div>
+      <p class="muted" style="margin-top:4px; font-size:0.85rem;">
+        From logged-out visitors or people not yet approved in the directory — approve to post
+        to the public wall, or delete to discard.
+      </p>
+      <div id="prayer-pending-list" class="panel stack" style="margin-top:12px;"></div>
+
+      <div class="eyebrow" style="margin-top:28px;">ON THE WALL</div>
+      <div id="prayer-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== MESSAGES TAB ===================== -->
+    <div id="tab-messages" style="display:none;">
+      <div class="eyebrow">CONTACT MESSAGES</div>
+      <p class="muted" style="margin-top:4px;">Messages sent through the Connect page contact form.</p>
+      <div id="messages-admin-list" class="panel stack" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== GALLERY TAB ===================== -->
+    <div id="tab-gallery" style="display:none;">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">ADD PHOTOS</div>
+        <form id="gallery-form" class="stack">
+          <div class="field">
+            <label>Photo(s)</label>
+            <input type="file" id="g-images" accept="image/*" multiple required>
+          </div>
+          <div class="field">
+            <label>Caption (optional — applied to all photos in this batch)</label>
+            <input type="text" id="g-caption" placeholder="e.g. Fall Retreat 2026">
+          </div>
+          <button type="submit" class="btn">Upload</button>
+        </form>
+      </div>
+
+      <div class="eyebrow">EXISTING PHOTOS</div>
+      <div id="gallery-admin-list" class="gallery-grid" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- ===================== REFLECTIONS TAB ===================== -->
+    <div id="tab-reflections" style="display:none;">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">WRITE THIS WEEK'S REFLECTION</div>
+        <form id="reflection-form" class="stack">
+          <input type="hidden" id="r-id">
+          <div class="field">
+            <label>Written By</label>
+            <input type="text" id="r-author" required placeholder="Whoever's turn it is this week">
+          </div>
+          <div class="field">
+            <label>Reflection</label>
+            <textarea id="r-text" required placeholder="A couple paragraphs — what's been on your heart this week." style="min-height:160px;"></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="field"><label>Quote / Verse (optional)</label><input type="text" id="r-quote-text" placeholder="&quot;Be not afraid.&quot;"></div>
+            <div class="field"><label>Source (optional)</label><input type="text" id="r-quote-source" placeholder="John 6:20"></div>
+          </div>
+          <div class="field">
+            <label>Image (optional)</label>
+            <input type="file" id="r-image" accept="image/*">
+            <div id="r-image-preview" class="img-thumb-row"></div>
+          </div>
+          <div class="field">
+            <label>Events — Past & Upcoming</label>
+            <div class="row" style="margin-bottom:8px;">
+              <button type="button" id="r-insert-standing" class="btn btn--ghost btn--small">Insert Regular Meeting</button>
+              <button type="button" id="r-pull-calendar" class="btn btn--ghost btn--small">Pull from Calendar</button>
+              <span id="r-pull-status" class="muted" style="display:none;"></span>
+            </div>
+            <textarea id="r-events" placeholder="Pulls from your Google Calendar, or type/edit this by hand — same as what you'd put in the Flocknote." style="min-height:140px;"></textarea>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn">Publish Reflection</button>
+            <button type="button" id="r-cancel" class="btn btn--ghost" style="display:none;">Cancel Edit</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="eyebrow">PAST REFLECTIONS</div>
+      <div id="reflections-admin-list" class="stack" style="margin-top:12px;"></div>
+    </div>
+  </div>
+</section>
+
+<footer id="site-footer"></footer>
+
+<script src="../js/config.js"></script>
+<script src="../js/sample-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/calendar-events.js"></script>
+<script>
+  // ---- auth guard ----
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (!BCMData.isLive()){
+      document.getElementById('not-configured-warning').style.display = 'block';
+    } else {
+      const session = await BCMData.getSession();
+      if (!session){ location.href = 'login.html'; return; }
+      const status = await BCMData.getMyStatus(session.user.id);
+      if (!status || !status.is_admin){ location.href = 'login.html'; return; }
+      document.getElementById('whoami').textContent = session.user.email;
+      const profile = await BCMData.getMyProfile(session.user.id).catch(() => null);
+      window._bcmAdminName = (profile && profile.name) || session.user.email;
+    }
+    loadAnnouncements();
+    loadTeam();
+    loadMembers();
+    loadPrayerRequests();
+    loadMessages();
+    loadGallery();
+    loadReflections();
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await BCMData.signOut();
+    location.href = 'login.html';
+  });
+
+  // ---- tabs ----
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-announcements').style.display = btn.dataset.tab === 'announcements' ? 'block' : 'none';
+      document.getElementById('tab-team').style.display = btn.dataset.tab === 'team' ? 'block' : 'none';
+      document.getElementById('tab-members').style.display = btn.dataset.tab === 'members' ? 'block' : 'none';
+      document.getElementById('tab-prayer').style.display = btn.dataset.tab === 'prayer' ? 'block' : 'none';
+      document.getElementById('tab-messages').style.display = btn.dataset.tab === 'messages' ? 'block' : 'none';
+      document.getElementById('tab-gallery').style.display = btn.dataset.tab === 'gallery' ? 'block' : 'none';
+      document.getElementById('tab-reflections').style.display = btn.dataset.tab === 'reflections' ? 'block' : 'none';
+    });
+  });
+
+  // ===================== ANNOUNCEMENTS =====================
+  async function loadAnnouncements(){
+    const list = document.getElementById('announcements-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getAnnouncements();
+      list.innerHTML = all.length ? all.map(a => `
+        <div class="admin-row">
+          <div>
+            ${a.pinned ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent);">Last-Minute</span>' : ''}
+            <h3 style="margin:6px 0 2px;">${bcmEscape(a.title)}</h3>
+            <p class="muted" style="margin:0 0 4px; max-width:60ch;">${bcmEscape(bcmTruncate(a.body,160))}</p>
+            ${a.location ? `<p class="muted" style="margin:0 0 4px;">📍 ${bcmEscape(a.location)}</p>` : ''}
+            ${a.image_urls && a.image_urls.length ? `<p class="muted" style="margin:0 0 4px;">${a.image_urls.length} image${a.image_urls.length>1?'s':''} attached</p>` : ''}
+            <span class="tag">${bcmFormatDate(a.created_at)}</span>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick='editAnnouncement(${JSON.stringify(a)})'>Edit</button>
+            <button class="btn btn--small btn--danger" onclick="removeAnnouncement('${a.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">None yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+
+  // ---- announcement images: existing (kept) urls + newly-picked files ----
+  let aExistingImages = [];
+  let aNewFiles = [];
+
+  function renderImagePreview(){
+    const wrap = document.getElementById('a-image-preview');
+    const existingHtml = aExistingImages.map((url, i) => `
+      <div class="img-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="img-thumb-remove" data-kind="existing" data-idx="${i}">&times;</button>
+      </div>`).join('');
+    const newHtml = aNewFiles.map((f, i) => `
+      <div class="img-thumb">
+        <img src="${URL.createObjectURL(f)}" alt="">
+        <button type="button" class="img-thumb-remove" data-kind="new" data-idx="${i}">&times;</button>
+      </div>`).join('');
+    wrap.innerHTML = existingHtml + newHtml;
+    wrap.querySelectorAll('.img-thumb-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (btn.dataset.kind === 'existing') aExistingImages.splice(idx, 1);
+        else aNewFiles.splice(idx, 1);
+        renderImagePreview();
+      });
+    });
+  }
+  document.getElementById('a-images').addEventListener('change', (e) => {
+    aNewFiles = aNewFiles.concat(Array.from(e.target.files));
+    e.target.value = '';
+    renderImagePreview();
+  });
+
+  function editAnnouncement(a){
+    document.getElementById('a-id').value = a.id;
+    document.getElementById('a-title').value = a.title;
+    document.getElementById('a-body').value = a.body;
+    document.getElementById('a-pinned').checked = !!a.pinned;
+    document.getElementById('a-expires').value = a.expires_at ? a.expires_at.slice(0,10) : '';
+    document.getElementById('a-location').value = a.location || '';
+    aExistingImages = [...(a.image_urls || [])];
+    aNewFiles = [];
+    renderImagePreview();
+    document.getElementById('a-cancel').style.display = 'inline-flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.getElementById('a-cancel').addEventListener('click', () => {
+    document.getElementById('announcement-form').reset();
+    document.getElementById('a-id').value = '';
+    aExistingImages = [];
+    aNewFiles = [];
+    renderImagePreview();
+    document.getElementById('a-cancel').style.display = 'none';
+  });
+
+  async function removeAnnouncement(id){
+    if (!confirm('Delete this announcement?')) return;
+    try{ await BCMData.deleteAnnouncement(id); loadAnnouncements(); }
+    catch(e){ alert(e.message); }
+  }
+
+  document.getElementById('announcement-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('a-id').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = aNewFiles.length ? 'Uploading images…' : 'Saving…';
+    try{
+      const uploadedUrls = [];
+      for (const file of aNewFiles){
+        uploadedUrls.push(await BCMData.uploadMedia(file, 'announcements'));
+      }
+      const payload = {
+        title: document.getElementById('a-title').value,
+        body: document.getElementById('a-body').value,
+        pinned: document.getElementById('a-pinned').checked,
+        expires_at: document.getElementById('a-expires').value || null,
+        location: document.getElementById('a-location').value || null,
+        image_urls: [...aExistingImages, ...uploadedUrls]
+      };
+      if (id) await BCMData.updateAnnouncement(id, payload);
+      else await BCMData.createAnnouncement(payload);
+      e.target.reset();
+      document.getElementById('a-id').value = '';
+      aExistingImages = [];
+      aNewFiles = [];
+      renderImagePreview();
+      document.getElementById('a-cancel').style.display = 'none';
+      loadAnnouncements();
+    }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Announcement';
+    }
+  });
+
+  // ===================== TEAM =====================
+  let tExistingPhoto = null; // url kept when editing (or null)
+  let tNewFile = null;       // File object staged for upload (or null)
+
+  function renderTeamPhotoPreview(){
+    const wrap = document.getElementById('t-photo-preview');
+    const url = tNewFile ? URL.createObjectURL(tNewFile) : tExistingPhoto;
+    wrap.innerHTML = url ? `
+      <div class="img-thumb" style="border-radius:50%; overflow:hidden;">
+        <img src="${url}" alt="">
+        <button type="button" class="img-thumb-remove" id="t-photo-remove">&times;</button>
+      </div>` : '';
+    const removeBtn = document.getElementById('t-photo-remove');
+    if (removeBtn) removeBtn.addEventListener('click', () => {
+      tExistingPhoto = null; tNewFile = null;
+      document.getElementById('t-photo').value = '';
+      renderTeamPhotoPreview();
+    });
+  }
+  document.getElementById('t-photo').addEventListener('change', (e) => {
+    tNewFile = e.target.files[0] || null;
+    renderTeamPhotoPreview();
+  });
+
+  async function loadTeam(){
+    const list = document.getElementById('team-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getTeam();
+      list.innerHTML = all.length ? all.map(m => `
+        <div class="admin-row">
+          <div class="row" style="align-items:center; gap:12px;">
+            ${m.photo_url
+              ? `<img src="${m.photo_url}" alt="" style="width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0;">`
+              : ''}
+            <div>
+              <h3 style="margin:0 0 2px;">${bcmEscape(m.name)}</h3>
+              <p class="muted" style="margin:0;">${bcmEscape(m.role)} · <span class="tag">${bcmEscape(m.category||'')}</span></p>
+            </div>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick='editTeamMember(${JSON.stringify(m)})'>Edit</button>
+            <button class="btn btn--small btn--danger" onclick="removeTeamMember('${m.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">None yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+
+  function editTeamMember(m){
+    document.getElementById('t-id').value = m.id;
+    document.getElementById('t-name').value = m.name;
+    document.getElementById('t-role').value = m.role;
+    document.getElementById('t-category').value = m.category || '';
+    document.getElementById('t-email').value = m.email || '';
+    document.getElementById('t-order').value = m.order || 10;
+    tExistingPhoto = m.photo_url || null;
+    tNewFile = null;
+    renderTeamPhotoPreview();
+    document.getElementById('t-cancel').style.display = 'inline-flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.getElementById('t-cancel').addEventListener('click', () => {
+    document.getElementById('team-form').reset();
+    document.getElementById('t-id').value = '';
+    tExistingPhoto = null; tNewFile = null;
+    renderTeamPhotoPreview();
+    document.getElementById('t-cancel').style.display = 'none';
+  });
+
+  async function removeTeamMember(id){
+    if (!confirm('Remove this team member?')) return;
+    try{ await BCMData.deleteTeamMember(id); loadTeam(); }
+    catch(e){ alert(e.message); }
+  }
+
+  document.getElementById('team-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('t-id').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = tNewFile ? 'Uploading photo…' : 'Saving…';
+    try{
+      let photoUrl = tExistingPhoto;
+      if (tNewFile) photoUrl = await BCMData.uploadMedia(tNewFile, 'team');
+      const payload = {
+        name: document.getElementById('t-name').value,
+        role: document.getElementById('t-role').value,
+        category: document.getElementById('t-category').value,
+        email: document.getElementById('t-email').value,
+        order: parseInt(document.getElementById('t-order').value || '10', 10),
+        photo_url: photoUrl
+      };
+      if (id) await BCMData.updateTeamMember(id, payload);
+      else await BCMData.createTeamMember(payload);
+      e.target.reset();
+      document.getElementById('t-id').value = '';
+      tExistingPhoto = null; tNewFile = null;
+      renderTeamPhotoPreview();
+      document.getElementById('t-cancel').style.display = 'none';
+      loadTeam();
+    }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Team Member';
+    }
+  });
+
+  // ===================== MEMBER REQUESTS =====================
+  async function loadMembers(){
+    const pendingEl = document.getElementById('pending-list');
+    const approvedEl = document.getElementById('approved-list');
+    pendingEl.innerHTML = '<p class="muted">Loading…</p>';
+    approvedEl.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const pending = await BCMData.listPendingRequests();
+      window._bcmPendingCache = pending;
+      pendingEl.innerHTML = pending.length ? pending.map(p => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(p.name)}</h3>
+            <p class="muted" style="margin:0;">${bcmEscape(p.email)} · requested ${bcmFormatDate(p.requested_at)}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small" onclick="approveRequest('${p.id}')">Approve</button>
+            <button class="btn btn--small btn--danger" onclick="denyRequest('${p.id}')">Deny</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No pending requests.</p>';
+    }catch(e){ pendingEl.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`; }
+
+    try{
+      const approved = await BCMData.listApprovedMembers();
+      approvedEl.innerHTML = approved.length ? approved.map(m => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(m.name)}</h3>
+            <p class="muted" style="margin:0;">${bcmEscape(m.email)} ${m.is_admin ? '· <span class="tag">Admin</span>' : ''}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick="toggleAdmin('${m.id}', ${!m.is_admin})">${m.is_admin ? 'Remove Admin' : 'Make Admin'}</button>
+            <button class="btn btn--small btn--danger" onclick="revokeAccess('${m.id}')">Revoke</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No approved members yet.</p>';
+    }catch(e){ approvedEl.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`; }
+  }
+
+  async function approveRequest(id){
+    const person = (window._bcmPendingCache || []).find(p => p.id === id);
+    try{
+      await BCMData.approveMember(id);
+      loadMembers();
+      // Best-effort — approval already succeeded either way.
+      if (person) BCMData.sendApprovalEmail(person.email, person.name, window._bcmAdminName);
+    }
+    catch(e){ alert(e.message); }
+  }
+  async function denyRequest(id){
+    if (!confirm('Deny and remove this request?')) return;
+    try{ await BCMData.denyMember(id); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+  async function toggleAdmin(id, makeAdmin){
+    if (makeAdmin && !confirm('Give this person full admin access (announcements, org chart, approvals)?')) return;
+    try{ await BCMData.setAdmin(id, makeAdmin); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+  async function revokeAccess(id){
+    if (!confirm('Revoke this person\'s directory access? Their profile will be removed.')) return;
+    try{ await BCMData.removeMember(id); loadMembers(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== PRAYER WALL =====================
+  async function loadPrayerRequests(){
+    const pendingList = document.getElementById('prayer-pending-list');
+    const approvedList = document.getElementById('prayer-admin-list');
+    pendingList.innerHTML = '<p class="muted">Loading…</p>';
+    approvedList.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getAllPrayerRequests();
+      const pending = all.filter(p => !p.approved);
+      const approved = all.filter(p => p.approved);
+
+      const row = (p, isPending) => `
+        <div class="admin-row">
+          <div>
+            <p style="margin:0 0 4px; max-width:60ch; white-space:pre-line;">${bcmEscape(p.request_text)}</p>
+            <span class="tag">${p.is_anonymous || !p.requester_name ? 'Anonymous' : bcmEscape(p.requester_name)}</span>
+            <span class="tag">${bcmFormatDate(p.created_at)}</span>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            ${isPending ? `<button class="btn btn--small" onclick="approvePrayerRequest('${p.id}')">Approve</button>` : ''}
+            <button class="btn btn--small btn--danger" onclick="removePrayerRequest('${p.id}')">Delete</button>
+          </div>
+        </div>
+      `;
+
+      pendingList.innerHTML = pending.length ? pending.map(p => row(p, true)).join('') : '<p class="muted">Nothing waiting on approval.</p>';
+      approvedList.innerHTML = approved.length ? approved.map(p => row(p, false)).join('') : '<p class="muted">No prayer requests posted yet.</p>';
+    }catch(e){
+      pendingList.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+      approvedList.innerHTML = '';
+    }
+  }
+  async function approvePrayerRequest(id){
+    try{ await BCMData.approvePrayerRequest(id); loadPrayerRequests(); }
+    catch(e){ alert(e.message); }
+  }
+  async function removePrayerRequest(id){
+    if (!confirm('Delete this prayer request?')) return;
+    try{ await BCMData.deletePrayerRequest(id); loadPrayerRequests(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== MESSAGES =====================
+  async function loadMessages(){
+    const list = document.getElementById('messages-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.listContactMessages();
+      list.innerHTML = all.length ? all.map(m => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(m.name)} ${!m.is_read ? '<span class="tag" style="color:var(--urgent); border-color:var(--urgent);">New</span>' : ''}</h3>
+            <p class="muted" style="margin:0 0 4px;">${bcmEscape(m.email)} · ${bcmFormatDate(m.created_at)}</p>
+            <p style="margin:0 0 4px; max-width:60ch; white-space:pre-line;">${bcmEscape(m.message)}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            ${!m.is_read ? `<button class="btn btn--small btn--ghost" onclick="markRead('${m.id}')">Mark Read</button>` : ''}
+            <button class="btn btn--small btn--danger" onclick="removeMessage('${m.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No messages yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+  async function markRead(id){
+    try{ await BCMData.markMessageRead(id, true); loadMessages(); }
+    catch(e){ alert(e.message); }
+  }
+  async function removeMessage(id){
+    if (!confirm('Delete this message?')) return;
+    try{ await BCMData.deleteContactMessage(id); loadMessages(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== GALLERY =====================
+  async function loadGallery(){
+    const list = document.getElementById('gallery-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getGalleryPhotos();
+      list.innerHTML = all.length ? all.map(p => `
+        <figure style="position:relative;">
+          <img src="${p.image_url}" alt="${bcmEscape(p.caption||'')}">
+          <button type="button" class="img-thumb-remove" style="top:6px; right:6px;" onclick="removeGalleryPhoto('${p.id}')">&times;</button>
+          ${p.caption ? `<figcaption class="muted">${bcmEscape(p.caption)}</figcaption>` : ''}
+        </figure>
+      `).join('') : '<p class="muted">No photos yet.</p>';
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+  document.getElementById('gallery-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const filesInput = document.getElementById('g-images');
+    const caption = document.getElementById('g-caption').value || null;
+    const files = Array.from(filesInput.files);
+    if (!files.length) return;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading…';
+    try{
+      for (const file of files){
+        const url = await BCMData.uploadMedia(file, 'gallery');
+        await BCMData.createGalleryPhoto({ image_url: url, caption });
+      }
+      e.target.reset();
+      loadGallery();
+    }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Upload';
+    }
+  });
+  async function removeGalleryPhoto(id){
+    if (!confirm('Remove this photo from the gallery?')) return;
+    try{ await BCMData.deleteGalleryPhoto(id); loadGallery(); }
+    catch(e){ alert(e.message); }
+  }
+
+  // ===================== REFLECTIONS =====================
+  let rExistingImage = null; // url kept when editing (or null)
+  let rNewFile = null;       // File object staged for upload (or null)
+
+  function renderReflectionImagePreview(){
+    const wrap = document.getElementById('r-image-preview');
+    const url = rNewFile ? URL.createObjectURL(rNewFile) : rExistingImage;
+    wrap.innerHTML = url ? `
+      <div class="img-thumb">
+        <img src="${url}" alt="">
+        <button type="button" class="img-thumb-remove" id="r-image-remove">&times;</button>
+      </div>` : '';
+    const removeBtn = document.getElementById('r-image-remove');
+    if (removeBtn) removeBtn.addEventListener('click', () => {
+      rExistingImage = null; rNewFile = null;
+      renderReflectionImagePreview();
+    });
+  }
+  document.getElementById('r-image').addEventListener('change', (e) => {
+    rNewFile = e.target.files[0] || null;
+    renderReflectionImagePreview();
+  });
+
+  document.getElementById('r-insert-standing').addEventListener('click', () => {
+    const eventsField = document.getElementById('r-events');
+    const line = bcmStandingMeetingText();
+    if (!line) return;
+    eventsField.value = eventsField.value ? eventsField.value + '\n' + line : line;
+  });
+
+  document.getElementById('r-pull-calendar').addEventListener('click', async () => {
+    const status = document.getElementById('r-pull-status');
+    status.style.display = 'inline';
+    status.textContent = 'Loading events…';
+    try{
+      const text = await bcmFetchCalendarEventsText();
+      const eventsField = document.getElementById('r-events');
+      eventsField.value = eventsField.value
+        ? eventsField.value + '\n\n' + text
+        : text;
+      status.textContent = 'Pulled — edit freely below.';
+      setTimeout(() => { status.style.display = 'none'; }, 3000);
+    }catch(err){
+      status.textContent = err.message;
+    }
+  });
+
+  async function loadReflections(){
+    const list = document.getElementById('reflections-admin-list');
+    list.innerHTML = '<p class="muted">Loading…</p>';
+    try{
+      const all = await BCMData.getReflections();
+      list.innerHTML = all.length ? all.map(r => `
+        <div class="admin-row">
+          <div>
+            <h3 style="margin:0 0 2px;">${bcmEscape(r.author_name)} — ${bcmFormatDate(r.published_at)}</h3>
+            <p class="muted" style="margin:0 0 4px; max-width:60ch;">${bcmEscape(bcmTruncate(r.reflection_text, 160))}</p>
+          </div>
+          <div class="row" style="flex-shrink:0;">
+            <button class="btn btn--small btn--ghost" onclick="editReflection('${r.id}')">Edit</button>
+            <button class="btn btn--small btn--danger" onclick="removeReflection('${r.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('') : '<p class="muted">No reflections posted yet.</p>';
+      window._bcmReflectionsCache = all;
+    }catch(e){
+      list.innerHTML = `<p class="muted">Error loading: ${e.message}</p>`;
+    }
+  }
+
+  function editReflection(id){
+    const r = (window._bcmReflectionsCache || []).find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('r-id').value = r.id;
+    document.getElementById('r-author').value = r.author_name || '';
+    document.getElementById('r-text').value = r.reflection_text || '';
+    document.getElementById('r-quote-text').value = r.quote_text || '';
+    document.getElementById('r-quote-source').value = r.quote_source || '';
+    document.getElementById('r-events').value = r.events_text || '';
+    rExistingImage = r.image_url || null;
+    rNewFile = null;
+    renderReflectionImagePreview();
+    document.getElementById('r-cancel').style.display = 'inline-flex';
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.getElementById('r-cancel').addEventListener('click', () => {
+    document.getElementById('reflection-form').reset();
+    document.getElementById('r-id').value = '';
+    rExistingImage = null; rNewFile = null;
+    renderReflectionImagePreview();
+    document.getElementById('r-cancel').style.display = 'none';
+  });
+
+  document.getElementById('reflection-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('r-id').value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = rNewFile ? 'Uploading image…' : 'Publishing…';
+    try{
+      let imageUrl = rExistingImage;
+      if (rNewFile) imageUrl = await BCMData.uploadMedia(rNewFile, 'reflections');
+      const payload = {
+        author_name: document.getElementById('r-author').value,
+        reflection_text: document.getElementById('r-text').value,
+        quote_text: document.getElementById('r-quote-text').value || null,
+        quote_source: document.getElementById('r-quote-source').value || null,
+        image_url: imageUrl,
+        events_text: document.getElementById('r-events').value || null
+      };
+      if (id) await BCMData.updateReflection(id, payload);
+      else await BCMData.createReflection(payload);
+      e.target.reset();
+      document.getElementById('r-id').value = '';
+      rExistingImage = null; rNewFile = null;
+      renderReflectionImagePreview();
+      document.getElementById('r-cancel').style.display = 'none';
+      loadReflections();
+    }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Publish Reflection';
+    }
+  });
+
+  async function removeReflection(id){
+    if (!confirm('Delete this reflection?')) return;
+    try{ await BCMData.deleteReflection(id); loadReflections(); }
+    catch(e){ alert(e.message); }
+  }
+</script>
+</body>
+</html>
