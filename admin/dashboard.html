@@ -125,9 +125,16 @@
             </div>
             <div class="field"><label>Email</label><input type="email" id="t-email"></div>
           </div>
-          <div class="field" style="max-width:160px;">
-            <label>Order (lower = first)</label>
-            <input type="number" id="t-order" value="10">
+          <div class="grid-2">
+            <div class="field" style="max-width:160px;">
+              <label>Order (lower = first)</label>
+              <input type="number" id="t-order" value="10">
+            </div>
+            <div class="field">
+              <label>Photo (optional — square works best)</label>
+              <input type="file" id="t-photo" accept="image/*">
+              <div id="t-photo-preview" class="img-thumb-row"></div>
+            </div>
           </div>
           <div class="row">
             <button type="submit" class="btn">Save Team Member</button>
@@ -417,6 +424,29 @@
   });
 
   // ===================== TEAM =====================
+  let tExistingPhoto = null; // url kept when editing (or null)
+  let tNewFile = null;       // File object staged for upload (or null)
+
+  function renderTeamPhotoPreview(){
+    const wrap = document.getElementById('t-photo-preview');
+    const url = tNewFile ? URL.createObjectURL(tNewFile) : tExistingPhoto;
+    wrap.innerHTML = url ? `
+      <div class="img-thumb" style="border-radius:50%; overflow:hidden;">
+        <img src="${url}" alt="">
+        <button type="button" class="img-thumb-remove" id="t-photo-remove">&times;</button>
+      </div>` : '';
+    const removeBtn = document.getElementById('t-photo-remove');
+    if (removeBtn) removeBtn.addEventListener('click', () => {
+      tExistingPhoto = null; tNewFile = null;
+      document.getElementById('t-photo').value = '';
+      renderTeamPhotoPreview();
+    });
+  }
+  document.getElementById('t-photo').addEventListener('change', (e) => {
+    tNewFile = e.target.files[0] || null;
+    renderTeamPhotoPreview();
+  });
+
   async function loadTeam(){
     const list = document.getElementById('team-admin-list');
     list.innerHTML = '<p class="muted">Loading…</p>';
@@ -424,9 +454,14 @@
       const all = await BCMData.getTeam();
       list.innerHTML = all.length ? all.map(m => `
         <div class="admin-row">
-          <div>
-            <h3 style="margin:0 0 2px;">${bcmEscape(m.name)}</h3>
-            <p class="muted" style="margin:0;">${bcmEscape(m.role)} · <span class="tag">${bcmEscape(m.category||'')}</span></p>
+          <div class="row" style="align-items:center; gap:12px;">
+            ${m.photo_url
+              ? `<img src="${m.photo_url}" alt="" style="width:36px; height:36px; border-radius:50%; object-fit:cover; flex-shrink:0;">`
+              : ''}
+            <div>
+              <h3 style="margin:0 0 2px;">${bcmEscape(m.name)}</h3>
+              <p class="muted" style="margin:0;">${bcmEscape(m.role)} · <span class="tag">${bcmEscape(m.category||'')}</span></p>
+            </div>
           </div>
           <div class="row" style="flex-shrink:0;">
             <button class="btn btn--small btn--ghost" onclick='editTeamMember(${JSON.stringify(m)})'>Edit</button>
@@ -446,12 +481,17 @@
     document.getElementById('t-category').value = m.category || '';
     document.getElementById('t-email').value = m.email || '';
     document.getElementById('t-order').value = m.order || 10;
+    tExistingPhoto = m.photo_url || null;
+    tNewFile = null;
+    renderTeamPhotoPreview();
     document.getElementById('t-cancel').style.display = 'inline-flex';
     window.scrollTo({top:0, behavior:'smooth'});
   }
   document.getElementById('t-cancel').addEventListener('click', () => {
     document.getElementById('team-form').reset();
     document.getElementById('t-id').value = '';
+    tExistingPhoto = null; tNewFile = null;
+    renderTeamPhotoPreview();
     document.getElementById('t-cancel').style.display = 'none';
   });
 
@@ -464,21 +504,33 @@
   document.getElementById('team-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = document.getElementById('t-id').value;
-    const payload = {
-      name: document.getElementById('t-name').value,
-      role: document.getElementById('t-role').value,
-      category: document.getElementById('t-category').value,
-      email: document.getElementById('t-email').value,
-      order: parseInt(document.getElementById('t-order').value || '10', 10)
-    };
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = tNewFile ? 'Uploading photo…' : 'Saving…';
     try{
+      let photoUrl = tExistingPhoto;
+      if (tNewFile) photoUrl = await BCMData.uploadMedia(tNewFile, 'team');
+      const payload = {
+        name: document.getElementById('t-name').value,
+        role: document.getElementById('t-role').value,
+        category: document.getElementById('t-category').value,
+        email: document.getElementById('t-email').value,
+        order: parseInt(document.getElementById('t-order').value || '10', 10),
+        photo_url: photoUrl
+      };
       if (id) await BCMData.updateTeamMember(id, payload);
       else await BCMData.createTeamMember(payload);
       e.target.reset();
       document.getElementById('t-id').value = '';
+      tExistingPhoto = null; tNewFile = null;
+      renderTeamPhotoPreview();
       document.getElementById('t-cancel').style.display = 'none';
       loadTeam();
     }catch(err){ alert(err.message); }
+    finally{
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Save Team Member';
+    }
   });
 
   // ===================== MEMBER REQUESTS =====================
