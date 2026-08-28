@@ -30,7 +30,7 @@ const BCM_CONFIG = {
     weekday: 4,          // 0 = Sunday, 1 = Monday, ... 4 = Thursday, 6 = Saturday
     time: "8:00 PM",
     label: "Regular Meeting",
-    location: "Loeb Playhouse"
+    location: "St. Thomas Aquinas Newman Hall"
   },
 
   // Optional — only needed for the automatic "you're approved!" email
