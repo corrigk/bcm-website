@@ -41,7 +41,7 @@
 
 const BCM_MATCH_WINDOW_MINUTES = 90; // how close a calendar event's time must be to a REGULAR_EVENTS time to count as "the same slot"
 
-const BCM_WELCOME_PARAGRAPH = "Just a reminder that all men, regardless of where you are at in your professional life or spiritual journey (Catholic or not) are more than welcome at BCM. Whether or not you have never been, or this is your first time in a while, you can always find a home here.";
+const BCM_WELCOME_PARAGRAPH = "Just a reminder that all men, regardless of where you are in your professional life or spiritual journey (Catholic or not) are more than welcome at BCM. Whether or not you have never been, or this is your first time in a while, you can always find a home here.";
 
 function bcmLowerFirst(str){
   if (!str) return str;
