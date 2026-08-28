@@ -67,7 +67,7 @@ const BCM_EVENT_TEMPLATES = {
     happening: () =>
       "Also today, continuing the Bacon Boys tradition, we will head over to Mad Mush for some super-sized pizzas. We will meet in the gathering space after the 5:30pm Daily Mass (around 6:05pm) and head down from there. You are more than welcome to just meet us at the restaurant too!",
     notHappening: () =>
-      "Bacon Boys is NOT happening this week."
+      "Bacon Boys is NOT happening this week. The BCM leadership team is indeed saddened by this, but we will pick back up as soon as we can!"
   },
   "large group": {
     mode: "opener",
@@ -83,7 +83,7 @@ const BCM_EVENT_TEMPLATES = {
         const desc = alt.description ? ` for ${bcmLowerFirst(alt.description)}` : '';
         return `Today at ${alt.timeLabel || alt.dateLabel}, BCM will NOT be meeting, however ${alt.title} will be happening${loc}${desc} instead.`;
       }
-      return 'Today, BCM will NOT be meeting this week.';
+      return 'Today, BCM will NOT be meeting this week. We are incredibly sad about this, but we will pick back up as soon as we can!';
     }
   },
   "st. francis perpetual adoration chapel": {
@@ -95,7 +95,7 @@ const BCM_EVENT_TEMPLATES = {
       if (exalt){
         return `This Friday, we will NOT be going to the St. Francis Perpetual Adoration Chapel because of Exalt. Exalt is where we as a Boiler Catholic community come together in the Church at ${exalt.timeLabel || '8:00pm'} for both silent Adoration and praise and worship. This is a beautiful opportunity to recenter your mind, body, and soul nearing the end of the week and the beginning of the weekend.`;
       }
-      return "This Friday, we will NOT be going to the St. Francis Perpetual Adoration Chapel this week — check Announcements for what's happening instead.";
+      return "This Friday, we will NOT be going to the St. Francis Perpetual Adoration Chapel — check Announcements for what's happening instead.";
     }
   }
 };
