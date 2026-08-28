@@ -64,20 +64,13 @@ async function bcmFetchCalendarEventsText(daysBack = 7, daysForward = 14){
   return text.trim() || 'No events found in this date range — add them manually below.';
 }
 
-// Fetches events for the next `daysForward` days and returns them as
-// raw objects (title, description, location, timing) rather than
-// formatted text — used by the Flocknote Rundown generator
-// (js/flocknote-generator.js), which needs the real description text
-// and needs to compare event times against REGULAR_EVENTS.
-async function bcmFetchUpcomingEventsRaw(daysForward = 7){
+// Shared fetch+parse helper for the two "raw events" functions below.
+// Not exported/used directly outside this file.
+async function bcmFetchRawEventsBetween(timeMin, timeMax){
   if (!bcmCalendarConfigured()){
     throw new Error("Google Calendar API isn't set up yet — see README.md \"Setting up the 'Pull from Calendar' button\".");
   }
   const calendarId = bcmGetCalendarId();
-  const now = new Date();
-  const timeMin = now.toISOString();
-  const timeMax = new Date(now.getTime() + daysForward * 86400000).toISOString();
-
   const params = new URLSearchParams({
     key: BCM_CONFIG.GOOGLE_CALENDAR_API_KEY,
     timeMin, timeMax,
@@ -107,6 +100,26 @@ async function bcmFetchUpcomingEventsRaw(daysForward = 7){
       timeLabel: isAllDay ? '' : start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
     };
   });
+}
+
+// Fetches events for the next `daysForward` days and returns them as
+// raw objects (title, description, location, timing) rather than
+// formatted text — used by the Flocknote Rundown generator
+// (js/flocknote-generator.js), which needs the real description text
+// and needs to compare event times against REGULAR_EVENTS.
+async function bcmFetchUpcomingEventsRaw(daysForward = 7){
+  const now = new Date();
+  const timeMax = new Date(now.getTime() + daysForward * 86400000).toISOString();
+  return bcmFetchRawEventsBetween(now.toISOString(), timeMax);
+}
+
+// Fetches events from the past `daysBack` days up to now, same raw
+// shape as bcmFetchUpcomingEventsRaw. Used by the Flocknote Rundown
+// generator to build the "Last week we..." opening line.
+async function bcmFetchRecentEventsRaw(daysBack = 7){
+  const now = new Date();
+  const timeMin = new Date(now.getTime() - daysBack * 86400000).toISOString();
+  return bcmFetchRawEventsBetween(timeMin, now.toISOString());
 }
 
 // Formats the standing weekly meeting (see BCM_CONFIG.STANDING_MEETING)

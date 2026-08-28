@@ -1,9 +1,10 @@
 /* ===========================================================
    The weekly rhythm — Rosary Walk, Bacon Boys, Large Group,
-   Holy Hour, Saturday Activities. Edit this list any time the
-   schedule changes; both calendar.html (shows the full weekly
-   list) and index.html (shows just what's coming up next) pull
-   from this same file, so you only ever edit it in one place.
+   St. Francis Perpetual Adoration Chapel, Saturday Activities.
+   Edit this list any time the schedule changes; both
+   calendar.html (shows the full weekly list) and index.html
+   (shows just what's coming up next) pull from this same file,
+   so you only ever edit it in one place.
 
    For events with a leaderKeyword, the page looks up whoever's
    role on the org chart (team.html, added via Admin → Org Chart)
@@ -26,9 +27,9 @@ const REGULAR_EVENTS = [
     description: "Our main weekly gathering — faith, fun, sports, and fellowship."
   },
   {
-    day: "FRI", time: "6:00 PM", title: "Holy Hour",
-    description: "Adoration and quiet prayer together.",
-    leaderKeyword: "holy hour"
+    day: "FRI", time: "5:45 PM", title: "St. Francis Perpetual Adoration Chapel",
+    description: "Leave from the Church at 5:45pm to arrive at the Chapel by 6:00pm — a quiet hour with our Lord heading into the weekend.",
+    leaderKeyword: "adoration"
   },
   {
     day: "SAT", time: "Varies", title: "Saturday Activities",
