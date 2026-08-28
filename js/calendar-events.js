@@ -64,6 +64,51 @@ async function bcmFetchCalendarEventsText(daysBack = 7, daysForward = 14){
   return text.trim() || 'No events found in this date range — add them manually below.';
 }
 
+// Fetches events for the next `daysForward` days and returns them as
+// raw objects (title, description, location, timing) rather than
+// formatted text — used by the Flocknote Rundown generator
+// (js/flocknote-generator.js), which needs the real description text
+// and needs to compare event times against REGULAR_EVENTS.
+async function bcmFetchUpcomingEventsRaw(daysForward = 7){
+  if (!bcmCalendarConfigured()){
+    throw new Error("Google Calendar API isn't set up yet — see README.md \"Setting up the 'Pull from Calendar' button\".");
+  }
+  const calendarId = bcmGetCalendarId();
+  const now = new Date();
+  const timeMin = now.toISOString();
+  const timeMax = new Date(now.getTime() + daysForward * 86400000).toISOString();
+
+  const params = new URLSearchParams({
+    key: BCM_CONFIG.GOOGLE_CALENDAR_API_KEY,
+    timeMin, timeMax,
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '50'
+  });
+  const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`);
+  if (!res.ok){
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error?.message || `Calendar API error (${res.status})`);
+  }
+  const data = await res.json();
+  return (data.items || []).map(ev => {
+    const startRaw = ev.start?.dateTime || ev.start?.date;
+    const isAllDay = !ev.start?.dateTime;
+    const start = new Date(startRaw);
+    return {
+      title: (ev.summary || 'Untitled event').trim(),
+      description: (ev.description || '').trim(),
+      location: (ev.location || '').trim(),
+      start,
+      isAllDay,
+      dayOfWeek: start.getDay(), // 0 = Sunday ... 6 = Saturday, matches BCM_WEEKDAY_INDEX
+      timeMinutes: isAllDay ? null : start.getHours() * 60 + start.getMinutes(),
+      dateLabel: start.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }),
+      timeLabel: isAllDay ? '' : start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    };
+  });
+}
+
 // Formats the standing weekly meeting (see BCM_CONFIG.STANDING_MEETING)
 // as one line, using the nearest upcoming occurrence of its weekday —
 // today if it's that day and not yet passed, otherwise next week.

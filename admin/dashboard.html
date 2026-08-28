@@ -61,6 +61,7 @@
       <button class="btn btn--ghost tab-btn" data-tab="messages">Messages</button>
       <button class="btn btn--ghost tab-btn" data-tab="gallery">Gallery</button>
       <button class="btn btn--ghost tab-btn" data-tab="reflections">Reflections</button>
+      <button class="btn btn--ghost tab-btn" data-tab="flocknote">Flocknote</button>
     </div>
 
     <!-- ===================== ANNOUNCEMENTS TAB ===================== -->
@@ -246,6 +247,33 @@
       <div class="eyebrow">PAST REFLECTIONS</div>
       <div id="reflections-admin-list" class="stack" style="margin-top:12px;"></div>
     </div>
+
+    <!-- ===================== FLOCKNOTE TAB ===================== -->
+    <div id="tab-flocknote" style="display:none;">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="eyebrow">WEEKLY RUNDOWN</div>
+        <p class="muted" style="margin-top:-6px; max-width:64ch;">
+          Pulls the next 7 days from Google Calendar and checks it against your regular
+          weekly schedule (Rosary Walk, Bacon Boys, Large Group, Holy Hour, Saturday
+          Activities), calling out anything that's NOT happening this week. Nothing is
+          sent automatically — this just gathers the facts. Copy the result into
+          Flocknote and write your intro around it.
+        </p>
+        <p class="muted" style="max-width:64ch;">
+          Tip: on weeks Large Group is renamed (e.g. "Trivia Night"), keep the words
+          "Large Group" somewhere in the calendar event's title too — that's how this
+          tool tells the real Large Group apart from any other Thursday-night event.
+        </p>
+        <div class="row" style="margin:12px 0;">
+          <button type="button" id="fn-generate" class="btn btn--ghost btn--small">Generate This Week's Rundown</button>
+          <button type="button" id="fn-copy" class="btn btn--ghost btn--small">Copy to Clipboard</button>
+          <span id="fn-status" class="muted" style="display:none;"></span>
+        </div>
+        <div class="field">
+          <textarea id="fn-output" style="min-height:340px; font-family: var(--f-mono, monospace);" placeholder="Click &quot;Generate This Week's Rundown&quot; to pull this week's events from the calendar."></textarea>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -257,7 +285,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/layout.js"></script>
+<script src="../js/regular-events.js"></script>
 <script src="../js/calendar-events.js"></script>
+<script src="../js/flocknote-generator.js"></script>
 <script>
   // ---- auth guard ----
   document.addEventListener('DOMContentLoaded', async () => {
@@ -298,6 +328,7 @@
       document.getElementById('tab-messages').style.display = btn.dataset.tab === 'messages' ? 'block' : 'none';
       document.getElementById('tab-gallery').style.display = btn.dataset.tab === 'gallery' ? 'block' : 'none';
       document.getElementById('tab-reflections').style.display = btn.dataset.tab === 'reflections' ? 'block' : 'none';
+      document.getElementById('tab-flocknote').style.display = btn.dataset.tab === 'flocknote' ? 'block' : 'none';
     });
   });
 
@@ -849,6 +880,36 @@
     try{ await BCMData.deleteReflection(id); loadReflections(); }
     catch(e){ alert(e.message); }
   }
+
+  // ===================== FLOCKNOTE WEEKLY RUNDOWN =====================
+  document.getElementById('fn-generate').addEventListener('click', async () => {
+    const status = document.getElementById('fn-status');
+    const output = document.getElementById('fn-output');
+    status.style.display = 'inline';
+    status.textContent = "Pulling this week's events…";
+    try{
+      output.value = await bcmGenerateFlocknoteRundown();
+      status.textContent = 'Done — review before copying into Flocknote.';
+      setTimeout(() => { status.style.display = 'none'; }, 4000);
+    }catch(err){
+      status.textContent = err.message;
+    }
+  });
+
+  document.getElementById('fn-copy').addEventListener('click', () => {
+    const output = document.getElementById('fn-output');
+    if (!output.value){ return; }
+    output.select();
+    const status = document.getElementById('fn-status');
+    navigator.clipboard.writeText(output.value).then(() => {
+      status.style.display = 'inline';
+      status.textContent = 'Copied!';
+      setTimeout(() => { status.style.display = 'none'; }, 2000);
+    }).catch(() => {
+      status.style.display = 'inline';
+      status.textContent = "Couldn't copy automatically — text is selected, use Ctrl/Cmd+C.";
+    });
+  });
 </script>
 </body>
 </html>
