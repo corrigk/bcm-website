@@ -230,7 +230,7 @@ function bcmBuildRundownText(events, pastEvents = []){
 
   const parts = [];
   if (lastWeekLine){ parts.push(lastWeekLine); parts.push(''); }
-  parts.push("[Write your intro here — remember to mention that everyone is welcome at BCM, no matter where they're at in their professional life or spiritual journey!]");
+  parts.push("[Write your intro here]");
   parts.push('');
   narrativeParagraphs.forEach(p => { parts.push(p); parts.push(''); });
   parts.push(BCM_WELCOME_PARAGRAPH);
